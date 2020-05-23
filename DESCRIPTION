@@ -1,13 +1,26 @@
 Package: parentfindr
 Title: What the Package Does (One Line, Title Case)
 Version: 0.0.0.9000
-Authors@R: 
-    person(given = "First",
-           family = "Last",
-           role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+Authors@R: c(
+    person("R. Mark", "Sharp", email = "rmsharp@me.com", 
+    comment = c(ORCID = "0000-0002-6170-6942"), 
+    role = c("aut", "cre", "cph", "dtc")))
+Description: The Parentage Analysis Tool uses an exclusion algorithm to
+    determine parentage assignment. It expects an input file describing the 
+    animals and their alleles as well as an input file listing the potential 
+    trios. This tool can accommodate multiple candidate dams as well as 
+    multiple candidate sires.
+Depends: 
+    R (>= 3.6.0)
+Imports:
+Suggests:
+    covr,
+    knitr,
+    pkgdown,
+    rmarkdown,
+    roxygen2 (>= 7.0.0),
+    testthat
+Language: en-US
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
