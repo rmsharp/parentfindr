@@ -60,15 +60,16 @@ exclusionParentage <- function(maxDiscrepant,
   selDiscrepant <- TRUE
   nAlleles <- 0
 
-  animalAllele <- readLines(con = animalAllelefile, warn = FALSE)
-  potentialTrios <- readLines(con = potentialTriosFile, warn = FALSE)
-  if (!isValidTrioHeader(potentialTrios[1]))
+  animalAllelesLines <- readLines(con = animalAllelefile, warn = FALSE)
+  potentialTriosLines <- readLines(con = potentialTriosFile, warn = FALSE)
+  if (!isValidTrioHeader(potentialTriosLines[1]))
     stop("Potential Trios File has invalid headers. Should have ",
-         get_and_or_list(getPotentialTriosFileHeaders()), ".")
+         get_and_or_list(getTriosFileHeaders()), ".")
 
-  if (!isValidAnimalAlleleHeader[1]) {
+  if (!isValidAnimalAlleleHeader(animalAllelesLines[1]))
       stop("Animal allele ile has invalid headers. First three headers should ",
       "be ", get_and_or_list(getPotentialAlleleFileHeaders()), ".")
 
-  }
+  trios <- getTrios(potentialTriosLines)
+  animalAlleles <- getAnimalAlleles(animalAlleleLines, dataType)
 }

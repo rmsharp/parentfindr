@@ -2,6 +2,6 @@
 #' file.
 #'
 #' @export
-getPotentialTriosFileHeaders <- function() {
+getTriosFileHeaders <- function() {
   c("OFFSPRING","DAMS","SIRES")
 }

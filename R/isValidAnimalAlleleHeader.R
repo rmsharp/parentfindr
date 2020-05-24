@@ -4,7 +4,8 @@
 #' the file containing the list of potential trios.
 #' @importFrom stringi stri_split_charclass
 #' @export
-isValidTrioHeader <- function(headerLine = headerLine) {
-  headers <- toupper(stri_split_charclass(headerLine, "\\p{WHITE_SPACE}")[[1]])
-  all(headers == getTriosFileHeaders())
+isValidAnimalAlleleHeader <- function(headerLine = headerLine) {
+  headers <- toupper(stri_split_charclass(headerLine,
+                                          "\\p{WHITE_SPACE}")[[1]][1:5])
+  all(headers == toupper(getAnimalAlleleFileHeaders()))
 }

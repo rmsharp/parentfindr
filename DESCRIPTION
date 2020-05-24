@@ -13,6 +13,9 @@ Description: The Parentage Analysis Tool uses an exclusion algorithm to
 Depends: 
     R (>= 3.6.0)
 Imports:
+    lubridate,
+    rmsutilityr,
+    stringi
 Suggests:
     covr,
     knitr,
