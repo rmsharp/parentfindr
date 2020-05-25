@@ -4,7 +4,7 @@
 #'
 #' @param line A line from the animal trios file.
 #'
-#' @importFrom stringi stri_split_charclass
+#' @importFrom stringi stri_split_charclass stri_split_fixed
 #' @export
 makeTriosRow <- function(line) {
   trios <- stri_split_charclass(line, "\\p{WHITE_SPACE}")[[1]]

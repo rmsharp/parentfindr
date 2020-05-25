@@ -16,7 +16,7 @@ test_that("getAnimalAlleles correctly extracts data", {
   expect_equal(animalAlleles[[1]]$refId, "43336")
   expect_equal(animalAlleles[[31]][["refId"]], "48799")
   expect_equal(length(animalAlleles), 31)
-  expect_equal(animalAlleles[[1]]$alleles[["AGTR11303"]], c("N/A", "N/A"))
+  expect_true(all(is.na(animalAlleles[[1]]$alleles[["AGTR11303"]])))
   expect_equal(animalAlleles[[1]]$alleles[["AK53266"]], c("1", "1"))
   expect_equal(animalAlleles[[3]]$alleles[["AKAP33344"]],
                 c("1", "1"))

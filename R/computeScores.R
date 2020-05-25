@@ -1,25 +1,86 @@
-#' Scores and entry potential parent to a kid and optionally a previously
-#' scored parent
+#' Counts the number of loci with missing loci data
 #'
+#' @return An integer value equal to the number of loci missing loci data
 #' @param parent A list with the all of the information from the animal allele
 #' file representing one potential parent.
 #' @param kid A list with the all of the information from the animal allele
 #' file representing the potential offspring.
 #' @param other A list with the all of the information from the animal allele
 #' file representing one potential parent.
-#' @importFrom stringi stri_split_charclass
 #' @export
-computescores <- function(parent, kid, other) {
-  missing = countMissing(parent$alleles)
-  invalid = countMissing(kid$alleles)
+computeScores <- function(parent, kid, other) {
+  parentAlleles <- parent$alleles
+  kidAlleles <- kid$alleles
+  # ea.kidlmatch=(ea.left ==ka.left || ea.right==ka.left);
+  # ea.kidrmatch=(ea.left ==ka.right || ea.right==ka.right);
+  # if(!(ea.kidlmatch||ea.kidrmatch)){
+  #   sb.append("discrepancy: locus: " + ea.disp + " "+  " OFFSPRING: "+
+  #              ka.left+","+ka.right + " " + swp("DAM") + ": "+ ea.left +
+  #              "," + ea.right + lf );
+  #   e.discrep++;
+  # }
+  missingLoci <- 0
+  invalidLoci <- 0
+  discrepantLoci <- 0
+  text <- character(0)
+  pkLMatch <- pkRMatch <- rep(TRUE, length(parentAlleles))
   if (missing(other)) {
-      discrepant <- countDiscrepant(parent, kid)
+    for (i in seq_along(parentAlleles)) {
+      pAllele <- parentAlleles[[i]]
+      kAllele <- kidAlleles[[i]]
+      if (any(is.na(pAllele)))
+        missingLoci <- missingLoci + 1
+      else if (any(is.na(kAllele))) {
+        invalidLoci <- invalidLoci + 1
+      } else {
+        pkLMatch[i] <- pAllele[1] == kAllele[1] || pAllele[2] == kAllele[1]
+        pkRMatch[i] <- pAllele[1] == kAllele[2] || pAllele[2] == kAllele[2]
+        if (!(pkLMatch[i] || pkRMatch[i])) {
+          discrepantLoci <- discrepantLoci + 1
+          text <- c(text,
+                    paste0("discrepancy: locus: ", names(parentAlleles)[i], " OFFSPRING: ",
+                           kAllele[1], ", ", kAllele[2],
+                           ifelse(parent$sex == "M", "  SIRE: ", "  DAM: "),
+                           pAllele[1], ", ", pAllele[2]))
+        }
+      }
+    }
   } else {
-    discrepant <- countDiscrepant(parent, kid, other)
+    for (i in seq_along(parentAlleles)) {
+      pAllele <- parentAlleles[[i]]
+      kAllele <- kidAlleles[[i]]
+      if (any(is.na(pAllele)))
+        missingLoci <- missingLoci + 1
+      else if (any(is.na(kAllele))) {
+        invalidLoci <- invalidLoci + 1
+      } else {
+        okLMatch <- other$scores$pkMatch$pkLMatch[i]
+        okRMatch <- other$scores$pkMatch$pkRMatch[i]
+        if (okLMatch == okRMatch) {
+          pkLMatch[i] <- pAllele[1] == kAllele[1] || pAllele[2] == kAllele[1]
+          pkRMatch[i] <- pAllele[1] == kAllele[2] || pAllele[2] == kAllele[2]
+        } else if (okLMatch) {
+          pkLMatch[i] <- FALSE
+          pkRMatch[i] <- pAllele[1] == kAllele[2] || pAllele[2] == kAllele[2]
+        } else if (okRMatch) {
+          pkLMatch[i] <- pAllele[1] == kAllele[1] || pAllele[2] == kAllele[1]
+          pkRMatch[i] <- FALSE
+        }
+        if (!(pkLMatch[i] || pkRMatch[i])) {
+          discrepantLoci <- discrepantLoci + 1
+          text <- c(text,
+                    paste0("discrepancy: locus: ", names(parentAlleles)[i],
+                           " OFFSPRING: ",
+                           kAllele[1], ", ", kAllele[2],
+                           ifelse(parent$sex == "M", "  SIRE: ", "  DAM: "),
+                           pAllele[1], ", ", pAllele[2]))
+        }
+      }
+    }
   }
-  list(
-    missing = missing,
-    invalid = invalid,
-    discrepant = discrepant
-  )
+  pkMatch <- list(kid = kid$refId, pkLMatch = pkLMatch,
+                  pkRMatch = pkRMatch)
+  list(refId = kid$refId, parentSex = parent$sex, missingLoci = missingLoci,
+       invalidLoci = invalidLoci,
+       discrepantLoci = discrepantLoci, pkMatch = pkMatch, text = text)
 }

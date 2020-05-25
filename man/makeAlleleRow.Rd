@@ -11,6 +11,9 @@ makeAlleleRow(line, alleleNames, dateType)
 
 \item{alleleNames}{A character vector of the header values for the alleles.
 These correspond to the allele names.}
+
+\item{dateType}{A character vector of length one used to guide
+interpretation of date fields. Either "YYYYMMDD" or "mm/dd/YYYY"}
 }
 \value{
 A vector suitable for row in an animal allele data.frame.
