@@ -4,10 +4,10 @@
 \alias{makeTriosRow}
 \title{Translates raw rows of an animal trios file to a named list object}
 \usage{
-makeTriosRow(line)
+makeTriosRow(record)
 }
 \arguments{
-\item{line}{A line from the animal trios file.}
+\item{record}{A record from the trios dataframe object.}
 }
 \value{
 A list suitable for row in an animal trios list.

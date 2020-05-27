@@ -1,6 +1,13 @@
-#' Counts the number of loci with missing loci data
+#' Scores and entry potential parent to a kid and optionally a previously
+#' scored parent
 #'
-#' @return An integer value equal to the number of loci missing loci data
+#' @return A list containing the offspring \code{refId}, the \code{sex} of the
+#' potential parent that was scored, the \code{pkMatch} list, which contains
+#' offspring's \code{refId} and the two logical vectors of left and right
+#' allele comparison results between the potential parent and the offspring,
+#' and finally it has the characer vector of text, which fully describes the
+#' discrepancies with one discrepancy per element.
+#'
 #' @param parent A list with the all of the information from the animal allele
 #' file representing one potential parent.
 #' @param kid A list with the all of the information from the animal allele
@@ -38,7 +45,8 @@ computeScores <- function(parent, kid, other) {
         if (!(pkLMatch[i] || pkRMatch[i])) {
           discrepantLoci <- discrepantLoci + 1
           text <- c(text,
-                    paste0("discrepancy: locus: ", names(parentAlleles)[i], " OFFSPRING: ",
+                    paste0("discrepancy: locus: ", names(parentAlleles)[i],
+                           " OFFSPRING: ",
                            kAllele[1], ", ", kAllele[2],
                            ifelse(parent$sex == "M", "  SIRE: ", "  DAM: "),
                            pAllele[1], ", ", pAllele[2]))
@@ -78,9 +86,20 @@ computeScores <- function(parent, kid, other) {
       }
     }
   }
+  ## cAlleleNumber <- length(alleles) - (missingLoci + invalidLoci)
+  ## percentNonDiscrepant <- (cAlleleNumber - discrepantLoci)/cAlleleNumber
+  numOfLoci <- length(parentAlleles)
+  numOfLociCompared <- numOfLoci - (missingLoci + invalidLoci)
+  fractionNonDiscrepant <- (numOfLociCompared - discrepantLoci) /
+    numOfLociCompared
   pkMatch <- list(kid = kid$refId, pkLMatch = pkLMatch,
                   pkRMatch = pkRMatch)
-  list(refId = kid$refId, parentSex = parent$sex, missingLoci = missingLoci,
+  list(refId = kid$refId,
+       parentSex = parent$sex,
+       missingLoci = missingLoci,
        invalidLoci = invalidLoci,
-       discrepantLoci = discrepantLoci, pkMatch = pkMatch, text = text)
+       discrepantLoci = discrepantLoci,
+       numOfLociCompared = numOfLociCompared,
+       fractionNonDiscrepant = fractionNonDiscrepant,
+       pkMatch = pkMatch, text = text)
 }

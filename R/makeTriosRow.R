@@ -2,15 +2,14 @@
 #'
 #' @return A list suitable for row in an animal trios list.
 #'
-#' @param line A line from the animal trios file.
+#' @param record A record from the trios dataframe object.
 #'
 #' @importFrom stringi stri_split_charclass stri_split_fixed
 #' @export
-makeTriosRow <- function(line) {
-  trios <- stri_split_charclass(line, "\\p{WHITE_SPACE}")[[1]]
-  offspring <- trios[1]
-  dams <- stri_split_fixed(trios[2], ",")[[1]]
-  sires <- stri_split_fixed(trios[3], ",")[[1]]
+makeTriosRow <- function(record) {
+  offspring <- record$offspring
+  dams <- stri_split_fixed(record$dams, ",")[[1]]
+  sires <- stri_split_fixed(record$sires, ",")[[1]]
 
   triosRow <- list(
     offspring = offspring,

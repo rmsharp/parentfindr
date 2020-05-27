@@ -11,5 +11,19 @@
 #' potential mates.
 #' @export
 sortScores <- function(scores) {
-  scores
+  discrepancyScores <- list()
+  for (i in seq_along(scores$dams)) {
+    sDiscrepancyScores <- list()
+    for (j in seq_along(scores$dams[[i]]$sires)) {
+      sDiscrepancyScores[[scores$dams[[i]]$sires[[j]]$refId]] <-
+        scores$dams[[i]]$sires[[j]]$fractionNonDiscrepant
+    }
+    discrepancyScores[[names(scores$dams)[[i]]]] <-
+      list(refId = scores$dams[[i]]$refId,
+           sex = scores$dams[[i]]$parentSex,
+           fractionNonDiscrepant = scores$dams[[i]]$fractionNonDiscrepant,
+           sDiscrepancyScores = sDiscrepancyScores)
+
+  }
+  discrepancyScores
 }

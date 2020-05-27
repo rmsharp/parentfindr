@@ -45,7 +45,7 @@ if (setType == "Fewest Discrepant")
 ## "datetype="+DATETYPE.getvalue()
 ## };
 
-size <- as.matrix(NA, nrow = 270, ncol = 24, rownames.force = NA)
+#size <- as.matrix(NA, nrow = 270, ncol = 24, rownames.force = NA)
 # args <- list(maxDiscrepant,
 #              minNumber,
 #              percentDiscrepant,
@@ -80,8 +80,8 @@ size <- as.matrix(NA, nrow = 270, ncol = 24, rownames.force = NA)
   selDiscrepant <- TRUE
   nAlleles <- 0
 
-  animalAllelesLines <- readLines(con = animalAllelefile, warn = FALSE)
-  potentialTriosLines <- readLines(con = potentialTriosFile, warn = FALSE)
+  animalAlleleLines <- readLines(con = alleleFile, warn = FALSE)
+  potentialTriosLines <- readLines(con = triosFile, warn = FALSE)
   if (!isValidTrioHeader(potentialTriosLines[1]))
     stop("Potential Trios File has invalid headers. Should have ",
          get_and_or_list(getTriosFileHeaders()), ".")
@@ -93,15 +93,13 @@ size <- as.matrix(NA, nrow = 270, ncol = 24, rownames.force = NA)
   trios <- getTrios(potentialTriosLines)
   animalAlleles <- getAnimalAlleles(animalAlleleLines, dateType)
   ## allScores[["48575"]][["43307"]][["43383"]]
-  trios <- list("48575" = list(offspring = "48575", dams = "43307",
-                               sires = "43383"))
-  trios <- list("48851" = list(offspring = "48575", dams = "43601",
-                               sires = "43383"))
+  ##trios <- list("48575" = list(offspring = "48575", dams = "43307",
+  ##                             sires = "43383"))
+  ##trios <- list("48851" = list(offspring = "48575", dams = "43601",
+  ##                             sires = "43383"))
   allScores <- list()
   for (kidId in names(trios)) {
     allScores[[kidId]] <- collectTrioScores(kidId, trios[[kidId]]$dams,
                                             trios[[kidId]]$sires, animalAlleles)
-
   }
 
-}

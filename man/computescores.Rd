@@ -2,7 +2,8 @@
 % Please edit documentation in R/computeScores.R
 \name{computeScores}
 \alias{computeScores}
-\title{Counts the number of loci with missing loci data}
+\title{Scores and entry potential parent to a kid and optionally a previously
+scored parent}
 \usage{
 computeScores(parent, kid, other)
 }
@@ -17,8 +18,14 @@ file representing the potential offspring.}
 file representing one potential parent.}
 }
 \value{
-An integer value equal to the number of loci missing loci data
+A list containing the offspring \code{refId}, the \code{sex} of the
+potential parent that was scored, the \code{pkMatch} list, which contains
+offspring's \code{refId} and the two logical vectors of left and right
+allele comparison results between the potential parent and the offspring,
+and finally it has the characer vector of text, which fully describes the
+discrepancies with one discrepancy per element.
 }
 \description{
-Counts the number of loci with missing loci data
+Scores and entry potential parent to a kid and optionally a previously
+scored parent
 }

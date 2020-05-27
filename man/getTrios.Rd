@@ -4,11 +4,11 @@
 \alias{getTrios}
 \title{Tests to see if the potential trios file has the appropriate header.}
 \usage{
-getTrios(lines)
+getTrios(triosFile)
 }
 \arguments{
-\item{lines}{Character vector of length one plus the number of animals where
-the additional line is the header}
+\item{triosFile}{Character vector of length one having the path of the
+trios file.}
 }
 \description{
 Tests to see if the potential trios file has the appropriate header.

@@ -20,15 +20,16 @@ collectTrioScores <- function(kidId, damIds, sireIds, animalAlleles) {
   scores <- list()
   for (damId in damIds) {
     dam <- animalAlleles[[damId]]
-    scores[[damId]] <- computeScores(dam, kid)
-    dam[["scores"]] <- scores[[damId]]
+    scores[["dams"]][[damId]] <- computeScores(dam, kid)
+    dam[["scores"]] <- scores[["dams"]][[damId]]
     for (sireId in sireIds) {
       sire <- animalAlleles[[sireId]]
-      scores[[damId]][[sireId]] <- computeScores(sire, kid, dam)
+      scores[["dams"]][[damId]][["sires"]][[sireId]] <-
+        computeScores(sire, kid, dam)
     }
-    scores[[damId]] <- sortScores(scores[[damId]])
+    #scores[[damId]] <- sortScores(scores[["dams"]][[damId]])
   }
 
-  scores <- sortScores(scores)
+  #scores <- sortScores(scores)
   scores
 }
