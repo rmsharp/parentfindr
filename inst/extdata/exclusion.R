@@ -2,6 +2,8 @@ library(rmsutilityr)
 library(stringi)
 ## final HTextfield ALLELEFILE= new HTextfield("Animals Allele File", "","Location of animal markers file");
 ## final HTextfield TRIOSFILE= new HTextfield("Potential Trios File", "","Location of the list of offspring and potential dams/sires");
+alleleFile <- "inst/testdata/snp-animal-alleles.xlsx"
+triosFile <- "inst/testdata/snp-potential-trios.xlsx"
 alleleFile <- "inst/testdata/snp-animal-alleles.txt"
 triosFile <- "inst/testdata/snp-potential-trios.txt"
 
@@ -80,18 +82,18 @@ if (setType == "Fewest Discrepant")
   selDiscrepant <- TRUE
   nAlleles <- 0
 
-  animalAlleleLines <- readLines(con = alleleFile, warn = FALSE)
-  potentialTriosLines <- readLines(con = triosFile, warn = FALSE)
-  if (!isValidTrioHeader(potentialTriosLines[1]))
-    stop("Potential Trios File has invalid headers. Should have ",
-         get_and_or_list(getTriosFileHeaders()), ".")
+##  animalAlleleLines <- readLines(con = alleleFile, warn = FALSE)
+##  potentialTriosLines <- readLines(con = triosFile, warn = FALSE)
+##  if (!isValidTrioHeader(potentialTriosLines[1]))
+##    stop("Potential Trios File has invalid headers. Should have ",
+##         get_and_or_list(getTriosFileHeaders()), ".")
+##
+##  if (!isValidAnimalAlleleHeader(animalAllelesLines[1]))
+##      stop("Animal allele file has invalid headers. First three headers should ",
+##      "be ", get_and_or_list(getPotentialAlleleFileHeaders()), ".")
 
-  if (!isValidAnimalAlleleHeader(animalAllelesLines[1]))
-      stop("Animal allele ile has invalid headers. First three headers should ",
-      "be ", get_and_or_list(getPotentialAlleleFileHeaders()), ".")
-
-  trios <- getTrios(potentialTriosLines)
-  animalAlleles <- getAnimalAlleles(animalAlleleLines, dateType)
+  trios <- getTrios(triosFile)
+  animalAlleles <- getAnimalAlleles(alleleFile, dateType)
   ## allScores[["48575"]][["43307"]][["43383"]]
   ##trios <- list("48575" = list(offspring = "48575", dams = "43307",
   ##                             sires = "43383"))

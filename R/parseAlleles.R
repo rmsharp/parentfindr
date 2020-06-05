@@ -1,4 +1,4 @@
-#' Translates tokens of an animal allele pairs to character vectors in a list.
+#' Translates raw rows of an animal allele file to a data.frame row
 #'
 #' @return A vector suitable for row in an animal allele data.frame.
 #'
