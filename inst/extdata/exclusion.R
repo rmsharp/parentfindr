@@ -6,6 +6,12 @@ alleleFile <- "inst/testdata/snp-animal-alleles.xlsx"
 triosFile <- "inst/testdata/snp-potential-trios.xlsx"
 alleleFile <- "inst/testdata/snp-animal-alleles.txt"
 triosFile <- "inst/testdata/snp-potential-trios.txt"
+alleleFile <- "inst/testdata/str-animal-alleles.txt"
+triosFile <- "inst/testdata/str-potential-trios.txt"
+alleleFile <- "inst/testdata/str-animal-alleles.xlsx"
+triosFile <- "inst/testdata/str-potential-trios.txt"
+alleleFile <- "inst/testdata/str-animal-alleles_rms.xlsx"
+triosFile <- "inst/testdata/str-potential-trios.txt"
 
 ## final HPullDown SELTYPE= new HPullDown("Selection Method",new String[]{"Fewest Discrepant","Most Concordant"}, "Select parent that has the minimum number of discrepancies or the greatest percentage of concordant alleles with the offspring.",true);
 ## final HPullDown DATETYPE= new HPullDown("Input date format",new String[]{"mm/dd/YYYY","YYYYMMDD"}, "mm/dd/YYYY is compatible with excel and etc, YYYYMMDD is the native pedsys format.",true);
@@ -20,6 +26,40 @@ triosFile <- "inst/testdata/snp-potential-trios.txt"
 ## This allows the calculation of denominator for the percent non-discrepant alleles.
 ## cAlleleNumber <- length(alleles) - (missingLoci + invalidLoci)
 ## percentNonDiscrepant <- (cAlleleNumber - discrepantLoci)/cAlleleNumber
+##  This converts "a", "c", "g", "t" to 1, 2, 3, 4 respectively if the allele
+##  string is !microsatelite && !nok which means the microsatellite
+##   genotype did not used integers.
+##  public genotype(String alleles, String desc){//csv string of alleles
+##     gcon2++;
+##     disp=desc;
+##     String [] t = spltucasetrim(alleles,",");
+##     String aleft="-1";
+##     String aright="-1";
+##     if(t.length==2){
+##       aleft=t[0];
+##       aright=t[1];
+##     }
+##     //      N/A
+##     boolean nok=false;
+##     int al=0;
+##     int ar=0;
+##     try{
+##       left=Integer.parseInt(aleft);
+##       right=Integer.parseInt(aright);
+##       nok=true;
+##     }catch(NumberFormatException e){
+##       left=-1;right=-1;
+##     }
+##     if(!microsatellites&&!nok){
+##       left=a2i(aleft);
+##       right=a2i(aright);
+##     }
+##     if(left<0 || right<0){//both invalid if one invalid
+##       left=-1;
+##       right=-1;
+##     }
+##
+## }
 ##
 minNumber <- -1
 maxDiscrepant <- -1
@@ -99,9 +139,4 @@ if (setType == "Fewest Discrepant")
   ##                             sires = "43383"))
   ##trios <- list("48851" = list(offspring = "48575", dams = "43601",
   ##                             sires = "43383"))
-  allScores <- list()
-  for (kidId in names(trios)) {
-    allScores[[kidId]] <- collectTrioScores(kidId, trios[[kidId]]$dams,
-                                            trios[[kidId]]$sires, animalAlleles)
-  }
-
+scores <- getScores(trios, animalAlleles)

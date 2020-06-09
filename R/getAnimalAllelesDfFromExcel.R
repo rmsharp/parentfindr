@@ -5,11 +5,16 @@
 #' @param dateType A character vector of length one used to guide
 #' interpretation of date fields. Either "YYYYMMDD" or "mm/dd/YYYY"
 #' @importFrom lubridate ymd mdy
+#' @importFrom readxl read_excel
 #' @importFrom stringi stri_split_charclass
 #' @importFrom rmsutilityr get_and_or_list
 #' @export
 getAnimalAllelesDfFromExcel <- function(alleleFile, dateType) {
-  animalAllelesDf <- as.data.frame(read_excel(path = alleleFile, na = "N/A"))
+  animalAllelesDf <- as.data.frame(read_excel(path = alleleFile,
+                                              col_types = "text",
+                                              na = "N/A"),
+                                   stringsAsFactors = FALSE)
+
   headers <- colnames(animalAllelesDf)
   found <- headers[seq_along(getAnimalAlleleFileHeaders())]
   ## Need to add ability to have either sires before or after dams

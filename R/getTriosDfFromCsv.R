@@ -24,6 +24,7 @@ getTriosDfFromCsv <- function(triosFile) {
   lines <- lines[-1]
   triosDf <- data.frame()
   for (line in lines) {
+    line <- stri_split_charclass(line, "\\p{WHITE_SPACE}")[[1]]
     trioRow <- data.frame(line[1], line[2], line[3])
     triosDf <- rbind(triosDf, trioRow)
   }

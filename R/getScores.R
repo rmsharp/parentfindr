@@ -1,0 +1,91 @@
+#' Get all of the \code{missing}, \code{invalid}, and \code{descrepant} loci
+#' scores.
+#'
+#' @return A list containing a named list for each offspring.
+#' The name of each list is the offspring's animal ID.
+#' Within each offspring list is a list of potential dams and each of those
+#' lists is named using the potential dam's ID.
+#' The dam's list contains the following data.
+#'
+#' \enumerate{
+#' \item{\code{refId}} {The ID of the offspring}
+#' \item{\code{parentSex}} {The sex of the potential dam, which should always
+#' be "F".}
+#' \item{\code{missingLoci}} {The number of missing loci, which are the loci
+#' without genotypes in the parent.}
+#' \item{\code{invalidLoci}} {The number of invalid loci, which are the loci
+#' missing in the offspring but present in the parent.}
+#' \item{\code{discrepantLoci}} {The number of discrepant loci, the
+#' non-matching loci
+#' in the parent in offspring where both have genotypes.}
+#' \item{\code{numOfLociCompared}} {The number of loci compared}
+#' \item{\code{fractionNonDiscrepant}} {The fraction of non-discrepant loci,
+#' which is
+#' the ratio of (\code{numOfLociCompared} - \code{discrepantLoci}) /
+#' \code{numOfLociCompared}.}
+#' \item{\code{pkMatch}} {A list with the following three elements.
+#'     \itemize{
+#'     \item{\code{kid}} {The ID of the offspring}
+#'     \item{\code{pkLMatch}} {A logical vector representing the concordance
+#'     (\code{TRUE}) or non-concordance \code{FALSE} between the kid and
+#'     dam's left allele (\code{pkLMatch})}
+#'     \item{\code{pkRMatch}} {A logical vector representing the concordance
+#'     (\code{TRUE}) or non-concordance \code{FALSE} between the kid and
+#'     dam's right allele (\code{pkRMatch}).}
+#'     }
+#'  }
+#'  \item{\code{text}} {A character vector describing each discrepant record.
+#'  Each element contains the name of the discrepant locus, the offspring's
+#'  genotype and the dam's genotype.}
+#'  \item{\code{sires}} {A list of potential sires nested within the current
+#'  dam of the list of dams nested inside the current offspring.
+#'  Each sire is represented with
+#'  a named list with the sire ID as the name of the list and the contents of
+#'  the list are as follows:
+#'     \enumerate{
+#'     \item{\code{refId}} {The offspring ID}
+#'     \item{\code{parentSex}} {Sex of the sire, which should always be "M"}
+#'     \item{\code{missingLoci}} {The number of missing loci, which are the
+#'     loci
+#'     without genotypes in the parent.}
+#'     \item{\code{invalidLoci}} {The number of invalid loci, which are the
+#'     loci missing
+#'     in the offspring but present in the parent.}
+#'     \item{\code{discrepantLoci}} {The number of discrepant loci, the
+#'     non-matching loci
+#'     in the parent in offspring where both have genotypes.}
+#'     \item{\code{numOfLociCompared}} {The number of loci compared}
+#'     \item{\code{fractionNonDiscrepant}} {The fraction of non-discrepant
+#'     loci, which is
+#'     the ratio of (\code{numOfLociCompared} - \code{discrepantLoci}) /
+#'     \code{numOfLociCompared}.}
+#'     \item{\code{pkMatch}} {A list with the following three elements.
+#'         \itemize{
+#'         \item{\code{kid}} {The ID of the offspring}
+#'         \item{\code{pkLMatch}} {A logical vector representing the concordance
+#'         (\code{TRUE}) or non-concordance \code{FALSE} between the kid and
+#'         dam's left allele (\code{pkLMatch})}
+#'         \item{\code{pkRMatch}} {A logical vector representing the concordance
+#'         (\code{TRUE}) or non-concordance \code{FALSE} between the kid and
+#'         dam's right allele (\code{pkRMatch}).}
+#'         }
+#'        }
+#'     \item{\code{text}} {A character vector describing each discrepant record.
+#'     Each element contains the name of the discrepant locus, the offspring's
+#'     genotype and the sire's genotype.}
+#'     }
+#'   }
+#' }
+#' @param trios List containing a list for each offspring. Each offspring list
+#' contains a named character vector of length one (\code{offspring}) containing
+#' the offspring ID, a character vector of potential dams (\code{dams}),
+#' and a named character vector of potential sires (\code{sires}).
+#' @param animalAlleles List with all allele information for all animals.
+#' @export
+getScores <- function(trios, animalAlleles) {
+  allScores <- list()
+  for (kidId in names(trios)) {
+    allScores[[kidId]] <- collectTrioScores(kidId, trios[[kidId]]$dams,
+                                            trios[[kidId]]$sires, animalAlleles)
+  }
+}

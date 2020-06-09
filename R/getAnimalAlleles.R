@@ -10,11 +10,18 @@
 #' @importFrom readxl excel_format
 #' @importFrom stringi stri_split_charclass
 #' @importFrom rmsutilityr get_and_or_list
+#' @export
 getAnimalAlleles <- function(alleleFile, dateType) {
-  if (excel_format(alleleFile) %in% c("xls", "xlsx")) {
-    alleles <- getAnimalAllelesDfFromExcel(alleleFile, dateType = dateType)
+  if (file.exists(alleleFile)) {
+    if (excel_format(alleleFile) %in% c("xls", "xlsx")) {
+      alleles <- getAnimalAllelesDfFromExcel(alleleFile, dateType = dateType)
+    } else {
+      alleles <- getAnimalAllelesDfFromCsv(alleleFile, dateType = dateType)
+    }
   } else {
-    alleles <- getAnimalAllelesDfFromCsv(alleleFile, dateType = dateType)
-  }
+    stop(paste0("The animal allele file cannot be found. The file name ",
+                "provided is '", alleleFile, "'."))
+    }
+
   alleles
 }
