@@ -1,5 +1,5 @@
-#' Creates a dataframe with a set of potential parents for in on row for each
-#' offspring.
+#' Creates a dataframe with a set of potential parents with one row for each
+#' offspring from CSV file.
 #'
 #' @return A dataframe with one row for each offspring where the potential dams
 #' and sires are the second and third column respectively. The \code{dam} and

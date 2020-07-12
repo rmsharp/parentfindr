@@ -69,8 +69,8 @@ dateType <- "YYYYMMDD"
 microSatellites <- FALSE
 siresFirst <- TRUE
 skipDate <- FALSE
-setType <- "Fewest Discrepant"
-if (setType == "Fewest Discrepant")
+selectionType <- "Fewest Discrepant"
+if (selectionType == "Fewest Discrepant")
   selDiscrepant <- TRUE
 
 ## String[]{"maxdiscrepant="+MAXDISCREPANT.getvalue(),

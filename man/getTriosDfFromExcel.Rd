@@ -3,7 +3,7 @@
 \name{getTriosDfFromExcel}
 \alias{getTriosDfFromExcel}
 \title{Creates a dataframe with a set of potential parents for in on row for each
-offspring.}
+offspring from an Excel file.}
 \usage{
 getTriosDfFromExcel(triosFile)
 }
@@ -19,5 +19,5 @@ separated as they were in the original file.
 }
 \description{
 Creates a dataframe with a set of potential parents for in on row for each
-offspring.
+offspring from an Excel file.
 }

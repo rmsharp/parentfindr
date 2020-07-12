@@ -1,4 +1,7 @@
-#' Tests to see if the potential trios file has the appropriate header.
+#' Detect file type of trios file and routes its parsing.
+#'
+#' The trios files are made up of sets of potential parents in one row for each
+#' offspring from CSV file.
 #'
 #' @param triosFile Character vector of length one having the path of the
 #' trios file.

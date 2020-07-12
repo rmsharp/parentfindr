@@ -2,7 +2,7 @@
 % Please edit documentation in R/getTrios.R
 \name{getTrios}
 \alias{getTrios}
-\title{Tests to see if the potential trios file has the appropriate header.}
+\title{Detect file type of trios file and routes its parsing.}
 \usage{
 getTrios(triosFile)
 }
@@ -11,5 +11,6 @@ getTrios(triosFile)
 trios file.}
 }
 \description{
-Tests to see if the potential trios file has the appropriate header.
+The trios files are made up of sets of potential parents in one row for each
+offspring from CSV file.
 }

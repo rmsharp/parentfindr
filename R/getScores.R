@@ -88,4 +88,5 @@ getScores <- function(trios, animalAlleles) {
     allScores[[kidId]] <- collectTrioScores(kidId, trios[[kidId]]$dams,
                                             trios[[kidId]]$sires, animalAlleles)
   }
+  allScores
 }

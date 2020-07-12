@@ -2,6 +2,7 @@
 
 export(collectTrioScores)
 export(computeScores)
+export(countMissingLoci)
 export(getAnimalAlleleFileHeaders)
 export(getAnimalAlleles)
 export(getAnimalAllelesDfFromCsv)

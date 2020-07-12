@@ -2,8 +2,8 @@
 % Please edit documentation in R/getTriosDfFromCsv.R
 \name{getTriosDfFromCsv}
 \alias{getTriosDfFromCsv}
-\title{Creates a dataframe with a set of potential parents for in on row for each
-offspring.}
+\title{Creates a dataframe with a set of potential parents with one row for each
+offspring from CSV file.}
 \usage{
 getTriosDfFromCsv(triosFile)
 }
@@ -18,6 +18,6 @@ and sires are the second and third column respectively. The \code{dam} and
 separated as they were in the original file.
 }
 \description{
-Creates a dataframe with a set of potential parents for in on row for each
-offspring.
+Creates a dataframe with a set of potential parents with one row for each
+offspring from CSV file.
 }
