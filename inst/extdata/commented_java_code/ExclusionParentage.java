@@ -57,7 +57,7 @@ static int nloci=0;
  * outMultiDamMultiSire for outmdms
  * outMultiDamMultiSireFilename for outmdmsfn
  */
-static PrintStream out;
+static PrintStream resultsReport;
 static PrintStream outcalls;
 static PrintStream outOneDamOneSire;
 static File outOneDamOneSireFilename;
@@ -71,6 +71,7 @@ static File outerrfn;
 static String lf=System.getProperty("line.separator");
 //static String lf="\n";
 /* RMS substituted selectionTypeFewestDiscrepant for seldiscrepant
+ */
 static boolean selectionTypeFewestDiscrepant=true;
 
 static int nalleles=0;
@@ -189,9 +190,9 @@ public static void commandline(String[] args) throws Exception {
 */
     String reportFile= parse(args, "outfile");
     if("".equals(reportFile))
-        out=System.out;
+        resultsReport=System.out;
     else
-        out=new PrintStream(reportFile);
+        resultsReport=new PrintStream(reportFile);
 
     String cls= parse(args, "callfile");
 
@@ -226,23 +227,23 @@ public static void commandline(String[] args) throws Exception {
         dt = ""+ new Date();
     String styp=selectionTypeFewestDiscrepant?"Fewest Discrepant":"Most Concordant";
 
-    out.println("Exclusion Parentage Report Using "+styp+": " + dt);
-    out.println("***Parameters*** ");
+    resultsReport.println("Exclusion Parentage Report Using "+styp+": " + dt);
+    resultsReport.println("***Parameters*** ");
     if(selectionTypeFewestDiscrepant){
-        out.println("Minimum number of testable locus percent per individual: " + minnumber);
-        out.println("Maximum discrepant locus percent per individual: " + maxdiscrepant);
+        resultsReport.println("Minimum number of testable locus percent per individual: " + minnumber);
+        resultsReport.println("Maximum discrepant locus percent per individual: " + maxdiscrepant);
     }else{
-        out.println("Maximum missing/untestable locus percent per individual: " + thmissing);
-        out.println("Maximum discrepant/untestable locus percent per individual: " + thdiscrepant);
+        resultsReport.println("Maximum missing/untestable locus percent per individual: " + thmissing);
+        resultsReport.println("Maximum discrepant/untestable locus percent per individual: " + thdiscrepant);
     }
-//  out.println("Input Files format version " + fv);
-    out.println("Input Animals to Marker Allele values file " + animalMarkerAlleleFile);
-    out.println("Input Potential Trios file " + potentialTriosFile);
-    out.println();
+//  resultsReport.println("Input Files format version " + fv);
+    resultsReport.println("Input Animals to Marker Allele values file " + animalMarkerAlleleFile);
+    resultsReport.println("Input Potential Trios file " + potentialTriosFile);
+    resultsReport.println();
 
 //  String potentialTriosFile = "../genetics/tstfiles/potentialtrios.tsv";
 //  String animalMarkerAlleleFile="../genetics/tstfiles/microsatellites.tsv";
-    //out="../genetics/tstfiles/parentagereporttst.csv";
+    //resultsReport="../genetics/tstfiles/parentagereporttst.csv";
     rep("parsing done");
     // RMS changing `in` to `potentialTriosReader` CsvReader in = new CsvReader(potentialTriosFile,'\t');
     CsvReader potentialTriosReader = new CsvReader(potentialTriosFile,'\t');
@@ -476,15 +477,15 @@ apply thresholds and see if there is anything left.
     }
     rep("main loop done ");
 
-    out.println("***Summary***");
-    out.println(row + " Offspring in the input file");
-    out.println(calledoffspring + " resolved to one dam and one sire");
-    out.println(multiparentoffspring + " resolved to multiple dams and/or sires");
-    out.println(ninvalid + " did not resolve to a valid offspring");
-    out.println(nwithinnovaliddam + " did not resolve to a valid "+swp("DAM").toLowerCase());
-    out.println(nwithinnovalidsire + " did not resolve to a valid "+swp("SIRE").toLowerCase());
-    out.println(nalleles + " Markers provided");
-    out.println();
+    resultsReport.println("***Summary***");
+    resultsReport.println(row + " Offspring in the input file");
+    resultsReport.println(calledoffspring + " resolved to one dam and one sire");
+    resultsReport.println(multiparentoffspring + " resolved to multiple dams and/or sires");
+    resultsReport.println(ninvalid + " did not resolve to a valid offspring");
+    resultsReport.println(nwithinnovaliddam + " did not resolve to a valid "+swp("DAM").toLowerCase());
+    resultsReport.println(nwithinnovalidsire + " did not resolve to a valid "+swp("SIRE").toLowerCase());
+    resultsReport.println(nalleles + " Markers provided");
+    resultsReport.println();
 
     outOneDamOneSire.flush();
     outOneDamOneSire.close();
@@ -497,46 +498,46 @@ apply thresholds and see if there is anything left.
 //  outnodata.flush();
 //  outnodata.close();
 
-    out.println("***Calls*** ");
+    resultsReport.println("***Calls*** ");
     byte [] buf = new byte [32767];
     FileInputStream fi=new FileInputStream(outOneDamOneSireFilename);
     int c = fi.read(buf);
     while(c != -1){
-        out.write(buf, 0, c);
+        resultsReport.write(buf, 0, c);
         c = fi.read(buf);
     }
     fi.close();
-    out.println();
+    resultsReport.println();
 
-    out.println("***Multiple Sires/Dams*** ");
+    resultsReport.println("***Multiple Sires/Dams*** ");
     fi=new FileInputStream(outMultiDamMultiSireFilename);
     c = fi.read(buf);
     while(c != -1){
-        out.write(buf, 0, c);
+        resultsReport.write(buf, 0, c);
         c = fi.read(buf);
     }
     fi.close();
-    out.println();
+    resultsReport.println();
 
-    out.println("***Errors*** ");
+    resultsReport.println("***Errors*** ");
     fi=new FileInputStream(outerrfn);
     c = fi.read(buf);
     while(c != -1){
-        out.write(buf, 0, c);
+        resultsReport.write(buf, 0, c);
         c = fi.read(buf);
     }
     fi.close();
-    out.println();
+    resultsReport.println();
 
-/*  out.println("***Animals with no match to genetic data file*** ");
+/*  resultsReport.println("***Animals with no match to genetic data file*** ");
 //  fi=new FileInputStream(outnodatafn);
     c = fi.read(buf);
     while(c != -1){
-        out.write(buf, 0, c);
+        resultsReport.write(buf, 0, c);
         c = fi.read(buf);
     }
     fi.close();
-    out.println(); */
+    resultsReport.println(); */
 
 
 String definitions="***Definitions***"+lf+
@@ -550,13 +551,13 @@ String definitions="***Definitions***"+lf+
 "unused: the number of recognizable locus values in the individual that had a missing corresponding locus in the offspring."+lf+
 "total: discrep+concord+missing+unused, should equal the number of expected markers in the file.";
 
-    out.println(definitions);
-    out.println();
+    resultsReport.println(definitions);
+    resultsReport.println();
 
 
 
-    out.flush();
-    out.close();
+    resultsReport.flush();
+    resultsReport.close();
 //  args=new String[]{animalMarkerAlleleFile,"tstfiles/colonydata.tsv","tstfiles/parentagereporttst.csv"};
 //  System.out.println(args[0]+","+args[1]+","+args[2]);
 }
