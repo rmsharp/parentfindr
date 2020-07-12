@@ -52,7 +52,7 @@ static double thdiscrepant = 4;
 static boolean microsatellites = true;
 static boolean siresfirst = false;
 static int nloci=0;
-/* RMS substituted outOneDamOneSire for out1d1s
+/** RMS substituted outOneDamOneSire for out1d1s
  * outOneDamOneSireFilename for out1d1sfn
  * outMultiDamMultiSire for outmdms
  * outMultiDamMultiSireFilename for outmdmsfn
@@ -70,7 +70,7 @@ static PrintStream outerr;
 static File outerrfn;
 static String lf=System.getProperty("line.separator");
 //static String lf="\n";
-/* RMS substituted selectionTypeFewestDiscrepant for seldiscrepant
+/** RMS substituted selectionTypeFewestDiscrepant for seldiscrepant
  */
 static boolean selectionTypeFewestDiscrepant=true;
 
@@ -157,7 +157,8 @@ public static void commandline(String[] args) throws Exception {
 //  args=new String[]{"10","../genetics/tstfiles/animalalleles.tsv","../genetics/tstfiles/potentialtrios.tsv",""};
 //      args=new String[]{"4","1","2","SNPS-1.0","../genetics/tstfiles/animalallelescnprc1.tsv","../genetics/tstfiles/potentialtrioscnprc1.tsv",""};
 //missing, invalidated, minsum, filesversion, animals2markers, potentialtrios
-/* RMS substituted animalMarkerAlleleFile for ms
+
+/** RMS substituted animalMarkerAlleleFile for ms
  * substituted potentialTriosFile for pt
 */
     String animalMarkerAlleleFile = parse(args, "animalallelefile");
@@ -186,7 +187,8 @@ public static void commandline(String[] args) throws Exception {
     datetype=tmp.equals("YYYYMMDD")?1:0;
 
 
-/* RMS substituted reportFile for rp
+/** RMS substituted reportFile for rp
+ * substituted resultsReport for out
 */
     String reportFile= parse(args, "outfile");
     if("".equals(reportFile))
