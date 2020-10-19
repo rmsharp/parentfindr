@@ -1,0 +1,75 @@
+---
+title: "Parent Exclusion"
+author: "R. Mark Sharp"
+date: "8/1/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(parentfindr)
+library(rmsutilityr)
+
+```
+
+## Input of Allele File and Trios File
+
+Define allele and trios file names.
+
+```{r define-allele-and-trio-filenames}
+alleleFile <- "../inst/testdata/snp-animal-alleles.xlsx"
+triosFile <- "../inst/testdata/snp-potential-trios.xlsx"
+#alleleFile <- "inst/testdata/snp-animal-alleles.txt"
+#triosFile <- "inst/testdata/snp-potential-trios.txt"
+#alleleFile <- "inst/testdata/str-animal-alleles.txt"
+#triosFile <- "inst/testdata/str-potential-trios.txt"
+#alleleFile <- "inst/testdata/str-animal-alleles.xlsx"
+#triosFile <- "inst/testdata/str-potential-trios.txt"
+#alleleFile <- "../inst/testdata/str-animal-alleles_rms.xlsx"
+#triosFile <- "../inst/testdata/str-potential-trios.txt"
+
+```
+
+## Data Format and Questions
+
+I have been reading through the code and have a question regarding how missing 
+loci (alleles) and invalid loci (alleles) are calculated.
+Only the left of the left and right pairs of the locus geneotypes are used for 
+scoring, which makes me assume that if the left one is missing, 
+both are missing. Is that correct?
+A parent’s locus is counted as __missing__ if it does not have a value in the 
+left allele even if this locus is missing for the offspring.
+A parent’s locus is counted as __invalid__ if it does have a value in the left 
+allele but the offspring does not have a value in the left allele.
+This allows the calculation of the denominator for the percent non-discrepant 
+alleles.
+
+## Hard Coded Test Data
+
+```{r set-up-test-data}
+  minNumber <- 4
+  maxDiscrepant <- 4
+  thMissing <- 4
+  thDiscrepant <- 4
+  microsatellites <- TRUE
+  siresFirst <- FALSE
+  selDiscrepant <- TRUE
+  nAlleles <- 0
+  dateType = "YYYYMMDD" # is one of c("YYYYMMDD", "mm/dd/YYYY")
+  firstParentType <- "dams" # is one of c("dames", "sires")
+
+```
+
+
+
+```{r read-in-example-data, echo=TRUE}
+trios <- getTrios(triosFile)
+animalAlleles <- getAnimalAlleles(alleleFile, dateType)
+
+```
+
+```{r calculate-scores}
+scores <- getScores(trios, animalAlleles)
+scoresDf <- getScoresDf(scores, firstParentType)
+scoresDf <- scoresDf[]
+```
