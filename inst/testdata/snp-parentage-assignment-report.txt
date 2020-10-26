@@ -1,0 +1,67 @@
+Exclusion Parentage Report: Wed May 02 16:33:23 CDT 2012
+***Parameters*** 
+Maximum missing/untestable locus percent per individual: 10.0
+Maximum discrepant/untestable locus percent per individual: 2.0
+Input Animals to Marker Allele values file /Users/elizabethmoran/Desktop/parentage-testing/input/TEST/animal-alleles-new-format-corrected-dates.txt
+Input Potential Trios file /Users/elizabethmoran/Desktop/parentage-testing/input/TEST/potential-trios-new-format.txt
+
+***Summary***
+7 Offspring in the input file
+7 resolved to one dam and one sire
+0 resolved to multiple dams and/or sires
+0 did not resolve to a valid offspring
+0 did not resolve to a valid dam
+0 did not resolve to a valid sire
+96 Markers provided
+
+***Calls*** 
+OFFSPRING 48575:   1 missing marker(s) 
+Type	ID	discrep	%concrd	#concrd	missing	unused	total
+ DAM1	43307	0	%100.00	94	2	0	96
+  SIRE1	43383	0	%100.00	94	2	0	96
+
+OFFSPRING 48858:   1 missing marker(s) 
+Type	ID	discrep	%concrd	#concrd	missing	unused	total
+ DAM1	43582	0	%100.00	95	1	0	96
+  SIRE1	43383	0	%100.00	94	2	0	96
+
+OFFSPRING 47680:   1 missing marker(s) 
+Type	ID	discrep	%concrd	#concrd	missing	unused	total
+ DAM1	43582	0	%100.00	95	1	0	96
+  SIRE1	43383	0	%100.00	94	2	0	96
+
+OFFSPRING 48741:   1 missing marker(s) 
+Type	ID	discrep	%concrd	#concrd	missing	unused	total
+ DAM1	44662	0	%100.00	95	1	0	96
+  SIRE1	43705	0	%100.00	95	1	0	96
+
+OFFSPRING 48851:   1 missing marker(s) 
+Type	ID	discrep	%concrd	#concrd	missing	unused	total
+ DAM1	43601	0	%100.00	93	3	0	96
+  SIRE1	43383	0	%100.00	94	2	0	96
+
+OFFSPRING 48799:   1 missing marker(s) 
+Type	ID	discrep	%concrd	#concrd	missing	unused	total
+ DAM1	43644	0	%100.00	95	1	0	96
+  SIRE1	43705	0	%100.00	95	1	0	96
+
+OFFSPRING 48955:   1 missing marker(s) 
+Type	ID	discrep	%concrd	#concrd	missing	unused	total
+ DAM1	43238	0	%100.00	95	1	0	96
+  SIRE1	43383	0	%100.00	94	2	0	96
+
+
+***Multiple Sires/Dams*** 
+
+***Errors*** 
+
+***Definitions***
+Calls: the section of the report for trios, where given the current threholds and data the offspring resolved to one sire and one dam.
+Type: The individual's role in the would-be trio.
+ID: the individual's ID as used in the input files.
+discrep: the number of discrepancies, where the dam could not match to a child allele, or where the sire could not match after evaluating the dam.
+#concord: the number of concordant loci.
+%concord: the number of concordant loci as a percentage of the loci that were recognizable in both parent and offspring.
+missing/missing markers: the number of loci that had one or more unrecognizable allele values.
+unused: the number of recognizable locus values in the individual that had a missing corresponding locus in the offspring.
+total: discrep+concord+missing+unused, should equal the number of expected markers in the file.

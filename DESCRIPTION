@@ -1,6 +1,7 @@
 Package: parentfindr
+Type: Package
 Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Version: 0.0.0.9001
 Authors@R: c(
     person("R. Mark", "Sharp", email = "rmsharp@me.com", 
     comment = c(ORCID = "0000-0002-6170-6942"), 
@@ -27,6 +28,7 @@ Suggests:
 Language: en-US
 License: MIT + file LICENSE
 Encoding: UTF-8
-LazyData: true
+LazyData: TRUE
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
+VignetteBuilder: knitr, rmarkdown

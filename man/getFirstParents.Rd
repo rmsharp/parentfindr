@@ -7,7 +7,7 @@
 getFirstParents(id, firstParentType, scores)
 }
 \arguments{
-\item{id}{progeny ID}
+\item{id}{offspring ID}
 
 \item{firstParentType}{character vector of length one with one of \emph{dams}
 or \emph{sires}.}

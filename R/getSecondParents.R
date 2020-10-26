@@ -1,6 +1,6 @@
 #' Get second parent IDs
 #'
-#' @param id progeny ID
+#' @param id offspring ID
 #' @param firstParent first parent ID
 #' @param firstParentType character vector of length one with one of \emph{dams}
 #'                     or \emph{sires}.

@@ -1,6 +1,6 @@
 #' Get first parent IDs
 #'
-#' @param id progeny ID
+#' @param id offspring ID
 #' @param firstParentType character vector of length one with one of \emph{dams}
 #'                     or \emph{sires}.
 #' @param scores list object with a comparison information for all trio

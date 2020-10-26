@@ -1,5 +1,4 @@
-#' Scores and entry potential parent to a kid and optionally a previously
-#' scored parent
+#' Scores a potential parent to a kid and optionally a previously scored parent.
 #'
 #' @return A list containing the offspring \code{refId}, the \code{sex} of the
 #' potential parent that was scored, the \code{pkMatch} list, which contains
@@ -18,6 +17,8 @@
 computeScores <- function(parent, kid, other) {
   parentAlleles <- parent$alleles
   kidAlleles <- kid$alleles
+  nAlleles <- length(kid$alleles)
+
   # ea.kidlmatch=(ea.left ==ka.left || ea.right==ka.left);
   # ea.kidrmatch=(ea.left ==ka.right || ea.right==ka.right);
   # if(!(ea.kidlmatch||ea.kidrmatch)){
@@ -95,6 +96,7 @@ computeScores <- function(parent, kid, other) {
   pkMatch <- list(kid = kid$refId, pkLMatch = pkLMatch,
                   pkRMatch = pkRMatch)
   list(refId = kid$refId,
+       nAlleles = nAlleles,
        parentSex = parent$sex,
        missingLoci = missingLoci,
        invalidLoci = invalidLoci,

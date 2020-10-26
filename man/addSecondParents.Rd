@@ -2,13 +2,15 @@
 % Please edit documentation in R/addSecondParents.R
 \name{addSecondParents}
 \alias{addSecondParents}
-\title{Make first parent data.frame object for dams or sires portion of the score
-object}
+\title{Add second parent data to first parent data.frame object.}
 \usage{
 addSecondParents(id, firstParentDf, secondParentType, columnNames, scores)
 }
 \arguments{
-\item{id}{progeny ID}
+\item{id}{offspring ID}
+
+\item{firstParentDf}{first parent data.frame object for dams or sires
+portion of the score object dependent on which is the first parent.}
 
 \item{secondParentType}{character vector of length one with one of \emph{dams}
 or \emph{sires}.}
@@ -18,10 +20,7 @@ in dataframe}
 
 \item{scores}{list object with a comparison information for all trio
 combinations.}
-
-\item{firstParents}{character vector of parent IDs of gender firstParentType}
 }
 \description{
-Make first parent data.frame object for dams or sires portion of the score
-object
+Add second parent data to first parent data.frame object.
 }

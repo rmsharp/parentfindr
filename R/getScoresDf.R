@@ -1,4 +1,4 @@
-#' Get data.frame object from scores object
+#' Make data.frame object from scores object
 #'
 #' @return A data.frame object containing the following columns
 #'
@@ -43,9 +43,10 @@
 #' @param firstParentType character vector of length one with one of \emph{dams}
 #'                     or \emph{sires}.
 #' @export
-getScoresDf <- function(scores, firstParentType) {
+makeScoresDf <- function(scores, firstParentType) {
   secondParentType <- ifelse(firstParentType == "dams", "sires", "dams")
-  columnNames <- c("parentSex", "missingLoci", "invalidLoci", "discrepantLoci",
+  columnNames <- c("nAlleles", "parentSex", "missingLoci", "invalidLoci",
+                   "discrepantLoci",
                     "numOfLociCompared", "fractionNonDiscrepant")
   ids <- names(scores)
   combinedDf <- data.frame()

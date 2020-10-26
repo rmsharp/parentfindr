@@ -13,18 +13,14 @@ vignette: >
   %\usepackage[UTF-8]{inputenc}
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-library(parentfindr)
-library(rmsutilityr)
 
-```
 
 ## Input of Allele File and Trios File
 
 Define allele and trios file names.
 
-```{r define-allele-and-trio-filenames}
+
+```r
 alleleFile <- "../inst/testdata/snp-animal-alleles.xlsx"
 triosFile <- "../inst/testdata/snp-potential-trios.xlsx"
 #alleleFile <- "inst/testdata/snp-animal-alleles.txt"
@@ -35,7 +31,6 @@ triosFile <- "../inst/testdata/snp-potential-trios.xlsx"
 #triosFile <- "inst/testdata/str-potential-trios.txt"
 alleleFile <- "../inst/testdata/str-animal-alleles_rms.xlsx"
 triosFile <- "../inst/testdata/str-potential-trios.txt"
-
 ```
 
 ## Data Format and Questions
@@ -86,7 +81,8 @@ total
 
 ## Hard Coded Test Data
 
-```{r set-up-test-data}
+
+```r
   minNumber <- 4
   maxDiscrepant <- 4
   thMissing <- 4
@@ -97,21 +93,20 @@ total
   nAlleles <- 0
   dateType = "YYYYMMDD" # is one of c("YYYYMMDD", "mm/dd/YYYY")
   firstParentType <- "dams" # is one of c("dames", "sires")
-
 ```
 
 
 
-```{r read-in-example-data, echo=TRUE}
+
+```r
 trios <- getTrios(triosFile)
 animalAlleles <- getAnimalAlleles(alleleFile, dateType)
-
 ```
 
-```{r calculate-scores}
+
+```r
 scores <- getScores(trios, animalAlleles)
 scoresDf <- makeScoresDf(scores, firstParentType)
-
 ```
 
 Remove offspring greater than maxium percent missing
@@ -120,49 +115,48 @@ The figure wording on the consortium's site is wrong.
 It has "offspring below max % missing threshold" while the code
 has offspring below or equal to max % missing threshold.
 
-```{r remove-offspring-maxMissing}
+
+```r
 offspringToRemove <- getOffspringOverMoxMissing(scoresDf, thMissing)
 scoresDf <- excludeOffspring(offspringToRemove, scoresDf)
-
 ```
 
 Remove offspring without at least one dam and at least one sire.
 
-```{r remove-offspring-no-dam}
+
+```r
 offspringToRemove <- getOffspringNoDam(trios)
 scoresDf <- excludeOffspring(offspringToRemove, scoresDf)
 
 offspringToRemove <- getOffspringNoSire(trios)
 scoresDf <- excludeOffspring(offspringToRemove, scoresDf)
-
 ```
 
 Remove dams above the maximum % missing or unused threshold.
 
-```{r remove-dams-maxMissing-maxUnused}
-scoresDf  <- removeDamsOverMaxMissing(scoresDf, thMissing)
 
+```r
+scoresDf  <- removeDamsOverMaxMissing(scoresDf, thMissing)
 ```
 
 Remove dams above maximum percent discrepancy threshold.
 
-```{r remove-dam-maxDiscrepant}
+
+```r
 scoresDf <- removeDamsOverMaxDiscrepant(scoresDf, thDiscrepant)
-
-
 ```
 
 Remove sires above the maximum percent missing or unused threshold.
 
-```{r remove-sires-maxMissing-maxUnused}
-scoresDf <- removeSiresOverMoxMissing(scoresDf, thMissing)
 
+```r
+scoresDf <- removeSiresOverMoxMissing(scoresDf, thMissing)
 ```
 
 Remove sires above maximum percent discrepancy threshold.
 
 
-```{r remove-sires-maxDiscrepant}
-scoresDf <- removeSiresOverMoxDiscrepant(scoresDf, thDiscrepant)
 
+```r
+scoresDf <- removeSiresOverMoxDiscrepant(scoresDf, thDiscrepant)
 ```

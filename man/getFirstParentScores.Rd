@@ -2,12 +2,12 @@
 % Please edit documentation in R/getFirstParentScores.R
 \name{getFirstParentScores}
 \alias{getFirstParentScores}
-\title{Get first parent score from scores object}
+\title{Get first parent scores from scores object}
 \usage{
 getFirstParentScores(id, firstParent, firstParentType, columnNames, scores)
 }
 \arguments{
-\item{id}{progeny ID}
+\item{id}{offspring ID}
 
 \item{firstParent}{first parent ID}
 
@@ -21,5 +21,5 @@ in dataframe}
 combinations.}
 }
 \description{
-Get first parent score from scores object
+Get first parent scores from scores object
 }

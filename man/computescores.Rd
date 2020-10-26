@@ -2,8 +2,7 @@
 % Please edit documentation in R/computeScores.R
 \name{computeScores}
 \alias{computeScores}
-\title{Scores and entry potential parent to a kid and optionally a previously
-scored parent}
+\title{Scores a potential parent to a kid and optionally a previously scored parent.}
 \usage{
 computeScores(parent, kid, other)
 }
@@ -26,6 +25,5 @@ and finally it has the characer vector of text, which fully describes the
 discrepancies with one discrepancy per element.
 }
 \description{
-Scores and entry potential parent to a kid and optionally a previously
-scored parent
+Scores a potential parent to a kid and optionally a previously scored parent.
 }

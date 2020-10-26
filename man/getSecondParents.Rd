@@ -7,7 +7,7 @@
 getSecondParents(id, firstParent, firstParentType, scores)
 }
 \arguments{
-\item{id}{progeny ID}
+\item{id}{offspring ID}
 
 \item{firstParent}{first parent ID}
 
