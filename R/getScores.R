@@ -18,11 +18,11 @@
 #' \item{\code{discrepantLoci}} {The number of discrepant loci, the
 #' non-matching loci
 #' in the parent in offspring where both have genotypes.}
-#' \item{\code{numOfLociCompared}} {The number of loci compared}
+#' \item{\code{numLociCompared}} {The number of loci compared}
 #' \item{\code{fractionNonDiscrepant}} {The fraction of non-discrepant loci,
 #' which is
-#' the ratio of (\code{numOfLociCompared} - \code{discrepantLoci}) /
-#' \code{numOfLociCompared}.}
+#' the ratio of (\code{numLociCompared} - \code{discrepantLoci}) /
+#' \code{numLociCompared}.}
 #' \item{\code{pkMatch}} {A list with the following three elements.
 #'     \itemize{
 #'     \item{\code{kid}} {The ID of the offspring}
@@ -54,11 +54,11 @@
 #'     \item{\code{discrepantLoci}} {The number of discrepant loci, the
 #'     non-matching loci
 #'     in the parent in offspring where both have genotypes.}
-#'     \item{\code{numOfLociCompared}} {The number of loci compared}
+#'     \item{\code{numLociCompared}} {The number of loci compared}
 #'     \item{\code{fractionNonDiscrepant}} {The fraction of non-discrepant
 #'     loci, which is
-#'     the ratio of (\code{numOfLociCompared} - \code{discrepantLoci}) /
-#'     \code{numOfLociCompared}.}
+#'     the ratio of (\code{numLociCompared} - \code{discrepantLoci}) /
+#'     \code{numLociCompared}.}
 #'     \item{\code{pkMatch}} {A list with the following three elements.
 #'         \itemize{
 #'         \item{\code{kid}} {The ID of the offspring}

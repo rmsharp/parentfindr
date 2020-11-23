@@ -71,7 +71,7 @@ siresFirst <- TRUE
 skipDate <- FALSE
 selectionType <- "Fewest Discrepant"
 if (selectionType == "Fewest Discrepant")
-  selDiscrepant <- TRUE
+  selectionTypeFewestDiscrepant <- TRUE
 
 ## String[]{"maxdiscrepant="+MAXDISCREPANT.getvalue(),
 ## "minnumber="+MINNUMBER.getvalue(),
@@ -119,7 +119,7 @@ if (selectionType == "Fewest Discrepant")
   thDiscrepant <- 4
   microsatellites <- TRUE
   siresFirst <- FALSE
-  selDiscrepant <- TRUE
+  selectionTypeFewestDiscrepant <- TRUE
   nAlleles <- 0
 
 ##  animalAlleleLines <- readLines(con = alleleFile, warn = FALSE)

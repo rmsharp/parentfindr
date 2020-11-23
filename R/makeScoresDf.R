@@ -14,11 +14,11 @@
 #' \item{\code{damDiscrepantLoci}} {The number of discrepant loci, the
 #' non-matching loci
 #' in the parent in offspring where both have genotypes.}
-#' \item{\code{damNumOfLociCompared}} {The number of loci compared}
+#' \item{\code{damNumLociCompared}} {The number of loci compared}
 #' \item{\code{damFractionNonDiscrepant}} {The fraction of non-discrepant loci,
 #'   which is
-#'   the ratio of (\code{numOfLociCompared} - \code{discrepantLoci}) /
-#'   \code{numOfLociCompared}.}
+#'   the ratio of (\code{numLociCompared} - \code{discrepantLoci}) /
+#'   \code{numLociCompared}.}
 #'   \item{\code{sire}} {A sire from the list of potential sires nested within
 #'   the current
 #'   dam of the list of dams nested inside the current offspring.}
@@ -32,11 +32,11 @@
 #' \item{\code{sireDiscrepantLoci}} {The number of discrepant loci, the
 #'     non-matching loci
 #'     in the parent in offspring where both have genotypes.}
-#' \item{\code{sireNumOfLociCompared}} {The number of loci compared}
+#' \item{\code{sireNumLociCompared}} {The number of loci compared}
 #' \item{\code{sireFractionNonDiscrepant}} {The fraction of non-discrepant
 #'     loci, which is
-#'     the ratio of (\code{sireNumOfLociCompared} - \code{sireDiscrepantLoci}) /
-#'     \code{sireNumOfLociCompared}.}
+#'     the ratio of (\code{sireNumLociCompared} - \code{sireDiscrepantLoci}) /
+#'     \code{sireNumLociCompared}.}
 #' }
 #' @param scores list object with a comparison information for all trio
 #'               combinations.
@@ -47,7 +47,7 @@ makeScoresDf <- function(scores, firstParentType) {
   secondParentType <- ifelse(firstParentType == "dams", "sires", "dams")
   columnNames <- c("nAlleles", "parentSex", "missingLoci", "invalidLoci",
                    "discrepantLoci",
-                    "numOfLociCompared", "fractionNonDiscrepant")
+                    "numLociCompared", "fractionNonDiscrepant")
   ids <- names(scores)
   combinedDf <- data.frame()
   for (id in ids) {

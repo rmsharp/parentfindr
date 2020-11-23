@@ -89,10 +89,10 @@ computeScores <- function(parent, kid, other) {
   }
   ## cAlleleNumber <- length(alleles) - (missingLoci + invalidLoci)
   ## percentNonDiscrepant <- (cAlleleNumber - discrepantLoci)/cAlleleNumber
-  numOfLoci <- length(parentAlleles)
-  numOfLociCompared <- numOfLoci - (missingLoci + invalidLoci)
-  fractionNonDiscrepant <- (numOfLociCompared - discrepantLoci) /
-    numOfLociCompared
+  numLoci <- length(parentAlleles)
+  numLociCompared <- numLoci - (missingLoci + invalidLoci)
+  fractionNonDiscrepant <- (numLociCompared - discrepantLoci) /
+    numLociCompared
   pkMatch <- list(kid = kid$refId, pkLMatch = pkLMatch,
                   pkRMatch = pkRMatch)
   list(refId = kid$refId,
@@ -101,7 +101,7 @@ computeScores <- function(parent, kid, other) {
        missingLoci = missingLoci,
        invalidLoci = invalidLoci,
        discrepantLoci = discrepantLoci,
-       numOfLociCompared = numOfLociCompared,
+       numLociCompared = numLociCompared,
        fractionNonDiscrepant = fractionNonDiscrepant,
        pkMatch = pkMatch, text = text)
 }

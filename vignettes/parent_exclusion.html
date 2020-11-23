@@ -213,8 +213,8 @@ triosFile &lt;- &quot;../inst/testdata/snp-potential-trios.xlsx&quot;
 #triosFile &lt;- &quot;inst/testdata/str-potential-trios.txt&quot;
 #alleleFile &lt;- &quot;inst/testdata/str-animal-alleles.xlsx&quot;
 #triosFile &lt;- &quot;inst/testdata/str-potential-trios.txt&quot;
-alleleFile &lt;- &quot;../inst/testdata/str-animal-alleles_rms.xlsx&quot;
-triosFile &lt;- &quot;../inst/testdata/str-potential-trios.txt&quot;
+#alleleFile &lt;- &quot;../inst/testdata/str-animal-alleles_rms.xlsx&quot;
+#triosFile &lt;- &quot;../inst/testdata/str-potential-trios.txt&quot;
 </code></pre>
 
 <h2>Data Format and Questions</h2>
@@ -264,24 +264,28 @@ alleles.</p>
 
 <h2>Hard Coded Test Data</h2>
 
-<pre><code class="r">  minNumber &lt;- 4
-  maxDiscrepant &lt;- 4
-  thMissing &lt;- 4
-  thDiscrepant &lt;- 4
-  microsatellites &lt;- TRUE
-  siresFirst &lt;- FALSE
-  selDiscrepant &lt;- TRUE
-  nAlleles &lt;- 0
-  dateType = &quot;YYYYMMDD&quot; # is one of c(&quot;YYYYMMDD&quot;, &quot;mm/dd/YYYY&quot;)
-  firstParentType &lt;- &quot;dams&quot; # is one of c(&quot;dames&quot;, &quot;sires&quot;)
+<pre><code class="r">  parentfindrParms &lt;- list(
+    minNumber = 4,
+    maxDiscrepant = 4,
+    thMissing = 4,
+    thDiscrepant = 4,
+    microsatellites = TRUE,
+    selectionTypeFewestDiscrepant = TRUE, # Not used yet
+    dateType = &quot;YYYYMMDD&quot;, # is one of c(&quot;YYYYMMDD&quot;, &quot;mm/dd/YYYY&quot;)
+    firstParentType = &quot;dams&quot;, # is one of c(&quot;dames&quot;, &quot;sires&quot;)
+    alleleFile = alleleFile,
+    triosFile = triosFile)
+
+  parentfindrParms &lt;- getParentfindrConfig(TRUE)
 </code></pre>
 
-<pre><code class="r">trios &lt;- getTrios(triosFile)
-animalAlleles &lt;- getAnimalAlleles(alleleFile, dateType)
+<pre><code class="r">trios &lt;- getTrios(parentfindrParms$triosFile)
+animalAlleles &lt;- getAnimalAlleles(parentfindrParms$alleleFile,
+                                  parentfindrParms$dateType)
 </code></pre>
 
 <pre><code class="r">scores &lt;- getScores(trios, animalAlleles)
-scoresDf &lt;- makeScoresDf(scores, firstParentType)
+scoresDf &lt;- makeScoresDf(scores, parentfindrParms$firstParentType)
 </code></pre>
 
 <p>Remove offspring greater than maxium percent missing
@@ -290,7 +294,8 @@ The figure wording on the consortium&#39;s site is wrong.
 It has &ldquo;offspring below max % missing threshold&rdquo; while the code
 has offspring below or equal to max % missing threshold.</p>
 
-<pre><code class="r">offspringToRemove &lt;- getOffspringOverMoxMissing(scoresDf, thMissing)
+<pre><code class="r">offspringToRemove &lt;- getOffspringOverMoxMissing(scoresDf, 
+                                                 parentfindrParms$thMissing)
 scoresDf &lt;- excludeOffspring(offspringToRemove, scoresDf)
 </code></pre>
 
@@ -305,23 +310,413 @@ scoresDf &lt;- excludeOffspring(offspringToRemove, scoresDf)
 
 <p>Remove dams above the maximum % missing or unused threshold.</p>
 
-<pre><code class="r">scoresDf  &lt;- removeDamsOverMaxMissing(scoresDf, thMissing)
+<pre><code class="r">scoresDf  &lt;- removeDamsOverMaxMissing(scoresDf, parentfindrParms$thMissing)
 </code></pre>
 
-<p>Remove dams above maximum percent discrepancy threshold.</p>
-
-<pre><code class="r">scoresDf &lt;- removeDamsOverMaxDiscrepant(scoresDf, thDiscrepant)
+<pre><code class="r">if (parentfindrParms$selectionTypeFewestDiscrepant) {
+  damRemovalText &lt;- stri_c(
+    &quot;The selection type is &#39;Fewest Discrepant&#39;. Thus,
+    &#39;removeDamsOverMaxDiscrepant()&#39; will be called in the code block below.\n&quot;,
+    &quot;\nThis will remove dams with more than &quot;, 
+    parentfindrParms$thDiscrepant, &quot; percent discrepant loci.&quot;)
+  sireRemovalText &lt;- stri_c(
+    &quot;The selection type is &#39;Fewest Discrepant&#39;. Thus,
+    &#39;removeSiresOverMaxDiscrepant()&#39; will be called in the code block below.\n&quot;,
+    &quot;\nThis will remove sires with more than &quot;, 
+    parentfindrParms$thDiscrepant, &quot; percent discrepant loci.&quot;)
+} else {
+  damRemovalText &lt;- stri_c(
+    &quot;The selection type is &#39;Most Concordant&#39;. Thus,
+    &#39;removeDamsBelowMinNumber()&#39; will be called in the code block below.\n&quot;,
+    &quot;\nThis will remove dams with less than &quot;, 
+    parentfindrParms$minNumber, &quot; percent concordent loci.&quot;)
+  sireRemovalText &lt;- stri_c(
+    &quot;The selection type is &#39;Most Concordant&#39;. Thus,
+    &#39;removeSiresBelowMinNumber()&#39; will be called in the code block below.\n&quot;,
+    &quot;\nThis will remove sires with less than &quot;, 
+    parentfindrParms$minNumber, &quot; percent concordent loci.&quot;)
+}
 </code></pre>
 
-<p>Remove sires above the maximum percent missing or unused threshold.</p>
+<p>The selection type is &#39;Fewest Discrepant&#39;. Thus,
+    &#39;removeDamsOverMaxDiscrepant()&#39; will be called in the code block below.</p>
 
-<pre><code class="r">scoresDf &lt;- removeSiresOverMoxMissing(scoresDf, thMissing)
+<p>This will remove dams with more than 4 percent discrepant loci.</p>
+
+<pre><code class="r">if (parentfindrParms$selectionTypeFewestDiscrepant) {
+  scoresDf &lt;- removeDamsOverMaxDiscrepant(scoresDf,
+                                          parentfindrParms$thDiscrepant)
+} else {
+  scoresDf &lt;- removeDamsBelowMinNumber(scoresDf,
+                                       parentfindrParms$minNumber)
+}
 </code></pre>
 
-<p>Remove sires above maximum percent discrepancy threshold.</p>
+<p>The selection type is &#39;Fewest Discrepant&#39;. Thus,
+    &#39;removeSiresOverMaxDiscrepant()&#39; will be called in the code block below.</p>
 
-<pre><code class="r">scoresDf &lt;- removeSiresOverMoxDiscrepant(scoresDf, thDiscrepant)
+<p>This will remove sires with more than 4 percent discrepant loci.</p>
+
+<pre><code class="r">scoresDf &lt;- removeSiresOverMoxMissing(scoresDf, parentfindrParms$thMissing)
+if (parentfindrParms$selectionTypeFewestDiscrepant) {
+  scoresDf &lt;- removeSiresOverMoxMissing(scoresDf,
+                                        parentfindrParms$thDiscrepant)
+} else {
+  scoresDf &lt;- removeSiresBelowMinNumber(scoresDf,
+                                        parentfindrParms$minNumber)
+}
 </code></pre>
+
+<pre><code class="r">xtable(scoresDf)
+</code></pre>
+
+<p>% latex table generated in R 4.0.3 by xtable 1.8-4 package
+% Sun Nov 22 20:08:14 2020
+\begin{table}[ht]
+\centering
+\begin{tabular}{rllrlrrrrrlrlrrrrr}
+  \hline
+ &amp; offspring &amp; dam &amp; damNAlleles &amp; damParentSex &amp; damMissingLoci &amp; damInvalidLoci &amp; damDiscrepantLoci &amp; damNumLociCompared &amp; damFractionNonDiscrepant &amp; sire &amp; sireNAlleles &amp; sireParentSex &amp; sireMissingLoci &amp; sireInvalidLoci &amp; sireDiscrepantLoci &amp; sireNumLociCompared &amp; sireFractionNonDiscrepant \ 
+  \hline
+1 &amp; 48575 &amp; 43336 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 \ 
+  2 &amp; 48575 &amp; 43336 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  3 &amp; 48575 &amp; 43336 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 \ 
+  4 &amp; 48575 &amp; 43336 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 \ 
+  5 &amp; 48575 &amp; 43336 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 \ 
+  6 &amp; 48575 &amp; 43336 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  7 &amp; 48575 &amp; 43336 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 19.00 &amp; 95.00 &amp; 0.80 \ 
+  8 &amp; 48575 &amp; 43336 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 2.00 &amp; 94.00 &amp; 0.98 \ 
+  31 &amp; 48575 &amp; 44484 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  32 &amp; 48575 &amp; 44484 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 18.00 &amp; 95.00 &amp; 0.81 \ 
+  33 &amp; 48575 &amp; 44484 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  34 &amp; 48575 &amp; 44484 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  35 &amp; 48575 &amp; 44484 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 \ 
+  36 &amp; 48575 &amp; 44484 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 \ 
+  37 &amp; 48575 &amp; 44484 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 21.00 &amp; 95.00 &amp; 0.78 \ 
+  38 &amp; 48575 &amp; 44484 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 3.00 &amp; 94.00 &amp; 0.97 \ 
+  9 &amp; 48575 &amp; 43601 &amp;  96 &amp; F &amp; 3.00 &amp; 0.00 &amp; 12.00 &amp; 93.00 &amp; 0.87 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  91 &amp; 48575 &amp; 43601 &amp;  96 &amp; F &amp; 3.00 &amp; 0.00 &amp; 12.00 &amp; 93.00 &amp; 0.87 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 18.00 &amp; 95.00 &amp; 0.81 \ 
+  92 &amp; 48575 &amp; 43601 &amp;  96 &amp; F &amp; 3.00 &amp; 0.00 &amp; 12.00 &amp; 93.00 &amp; 0.87 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 16.00 &amp; 95.00 &amp; 0.83 \ 
+  93 &amp; 48575 &amp; 43601 &amp;  96 &amp; F &amp; 3.00 &amp; 0.00 &amp; 12.00 &amp; 93.00 &amp; 0.87 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  94 &amp; 48575 &amp; 43601 &amp;  96 &amp; F &amp; 3.00 &amp; 0.00 &amp; 12.00 &amp; 93.00 &amp; 0.87 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 \ 
+  95 &amp; 48575 &amp; 43601 &amp;  96 &amp; F &amp; 3.00 &amp; 0.00 &amp; 12.00 &amp; 93.00 &amp; 0.87 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 \ 
+  96 &amp; 48575 &amp; 43601 &amp;  96 &amp; F &amp; 3.00 &amp; 0.00 &amp; 12.00 &amp; 93.00 &amp; 0.87 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 22.00 &amp; 95.00 &amp; 0.77 \ 
+  97 &amp; 48575 &amp; 43601 &amp;  96 &amp; F &amp; 3.00 &amp; 0.00 &amp; 12.00 &amp; 93.00 &amp; 0.87 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 5.00 &amp; 94.00 &amp; 0.95 \ 
+  10 &amp; 48575 &amp; 44540 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 \ 
+  101 &amp; 48575 &amp; 44540 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  102 &amp; 48575 &amp; 44540 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  103 &amp; 48575 &amp; 44540 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 \ 
+  104 &amp; 48575 &amp; 44540 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  105 &amp; 48575 &amp; 44540 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 \ 
+  106 &amp; 48575 &amp; 44540 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 21.00 &amp; 95.00 &amp; 0.78 \ 
+  107 &amp; 48575 &amp; 44540 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 4.00 &amp; 94.00 &amp; 0.96 \ 
+  11 &amp; 48575 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  111 &amp; 48575 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 19.00 &amp; 95.00 &amp; 0.80 \ 
+  112 &amp; 48575 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  113 &amp; 48575 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  114 &amp; 48575 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 \ 
+  115 &amp; 48575 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  116 &amp; 48575 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 21.00 &amp; 95.00 &amp; 0.78 \ 
+  117 &amp; 48575 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 2.00 &amp; 94.00 &amp; 0.98 \ 
+  14 &amp; 48575 &amp; 43307 &amp;  96 &amp; F &amp; 2.00 &amp; 0.00 &amp; 0.00 &amp; 94.00 &amp; 1.00 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  141 &amp; 48575 &amp; 43307 &amp;  96 &amp; F &amp; 2.00 &amp; 0.00 &amp; 0.00 &amp; 94.00 &amp; 1.00 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 17.00 &amp; 95.00 &amp; 0.82 \ 
+  142 &amp; 48575 &amp; 43307 &amp;  96 &amp; F &amp; 2.00 &amp; 0.00 &amp; 0.00 &amp; 94.00 &amp; 1.00 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  143 &amp; 48575 &amp; 43307 &amp;  96 &amp; F &amp; 2.00 &amp; 0.00 &amp; 0.00 &amp; 94.00 &amp; 1.00 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 17.00 &amp; 95.00 &amp; 0.82 \ 
+  144 &amp; 48575 &amp; 43307 &amp;  96 &amp; F &amp; 2.00 &amp; 0.00 &amp; 0.00 &amp; 94.00 &amp; 1.00 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  145 &amp; 48575 &amp; 43307 &amp;  96 &amp; F &amp; 2.00 &amp; 0.00 &amp; 0.00 &amp; 94.00 &amp; 1.00 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 \ 
+  146 &amp; 48575 &amp; 43307 &amp;  96 &amp; F &amp; 2.00 &amp; 0.00 &amp; 0.00 &amp; 94.00 &amp; 1.00 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 20.00 &amp; 95.00 &amp; 0.79 \ 
+  147 &amp; 48575 &amp; 43307 &amp;  96 &amp; F &amp; 2.00 &amp; 0.00 &amp; 0.00 &amp; 94.00 &amp; 1.00 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 0.00 &amp; 94.00 &amp; 1.00 \ 
+  211 &amp; 48858 &amp; 43575 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 21.00 &amp; 95.00 &amp; 0.78 \ 
+  221 &amp; 48858 &amp; 43575 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 19.00 &amp; 95.00 &amp; 0.80 \ 
+  231 &amp; 48858 &amp; 43575 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 20.00 &amp; 95.00 &amp; 0.79 \ 
+  241 &amp; 48858 &amp; 43575 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 23.00 &amp; 95.00 &amp; 0.76 \ 
+  251 &amp; 48858 &amp; 43575 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 \ 
+  261 &amp; 48858 &amp; 43575 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  271 &amp; 48858 &amp; 43575 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 22.00 &amp; 95.00 &amp; 0.77 \ 
+  281 &amp; 48858 &amp; 43575 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 7.00 &amp; 94.00 &amp; 0.93 \ 
+  311 &amp; 48858 &amp; 44484 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 18.00 &amp; 95.00 &amp; 0.81 \ 
+  321 &amp; 48858 &amp; 44484 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  331 &amp; 48858 &amp; 44484 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 18.00 &amp; 95.00 &amp; 0.81 \ 
+  341 &amp; 48858 &amp; 44484 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 21.00 &amp; 95.00 &amp; 0.78 \ 
+  351 &amp; 48858 &amp; 44484 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  361 &amp; 48858 &amp; 44484 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 18.00 &amp; 95.00 &amp; 0.81 \ 
+  371 &amp; 48858 &amp; 44484 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 20.00 &amp; 95.00 &amp; 0.79 \ 
+  381 &amp; 48858 &amp; 44484 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 6.00 &amp; 94.00 &amp; 0.94 \ 
+  411 &amp; 48858 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 18.00 &amp; 95.00 &amp; 0.81 \ 
+  421 &amp; 48858 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 17.00 &amp; 95.00 &amp; 0.82 \ 
+  431 &amp; 48858 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 17.00 &amp; 95.00 &amp; 0.82 \ 
+  441 &amp; 48858 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 27.00 &amp; 95.00 &amp; 0.72 \ 
+  451 &amp; 48858 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 \ 
+  461 &amp; 48858 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  471 &amp; 48858 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 21.00 &amp; 95.00 &amp; 0.78 \ 
+  481 &amp; 48858 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 6.00 &amp; 94.00 &amp; 0.94 \ 
+  511 &amp; 48858 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 16.00 &amp; 95.00 &amp; 0.83 \ 
+  521 &amp; 48858 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 \ 
+  531 &amp; 48858 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 16.00 &amp; 95.00 &amp; 0.83 \ 
+  541 &amp; 48858 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  551 &amp; 48858 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 \ 
+  561 &amp; 48858 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 \ 
+  571 &amp; 48858 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  581 &amp; 48858 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 0.00 &amp; 94.00 &amp; 1.00 \ 
+  118 &amp; 48858 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 19.00 &amp; 95.00 &amp; 0.80 \ 
+  1111 &amp; 48858 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  1121 &amp; 48858 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 19.00 &amp; 95.00 &amp; 0.80 \ 
+  1131 &amp; 48858 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 24.00 &amp; 95.00 &amp; 0.75 \ 
+  1141 &amp; 48858 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 \ 
+  1151 &amp; 48858 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 16.00 &amp; 95.00 &amp; 0.83 \ 
+  1161 &amp; 48858 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 21.00 &amp; 95.00 &amp; 0.78 \ 
+  1171 &amp; 48858 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 6.00 &amp; 94.00 &amp; 0.94 \ 
+  128 &amp; 48858 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 17.00 &amp; 95.00 &amp; 0.82 \ 
+  1211 &amp; 48858 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  1221 &amp; 48858 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 19.00 &amp; 95.00 &amp; 0.80 \ 
+  1231 &amp; 48858 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 18.00 &amp; 95.00 &amp; 0.81 \ 
+  1241 &amp; 48858 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 8.00 &amp; 95.00 &amp; 0.92 \ 
+  1251 &amp; 48858 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  1261 &amp; 48858 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 17.00 &amp; 95.00 &amp; 0.82 \ 
+  1271 &amp; 48858 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 5.00 &amp; 94.00 &amp; 0.95 \ 
+  138 &amp; 48858 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 18.00 &amp; 95.00 &amp; 0.81 \ 
+  1311 &amp; 48858 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 19.00 &amp; 95.00 &amp; 0.80 \ 
+  1321 &amp; 48858 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 16.00 &amp; 95.00 &amp; 0.83 \ 
+  1331 &amp; 48858 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 19.00 &amp; 95.00 &amp; 0.80 \ 
+  1341 &amp; 48858 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 9.00 &amp; 95.00 &amp; 0.91 \ 
+  1351 &amp; 48858 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 \ 
+  1361 &amp; 48858 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  1371 &amp; 48858 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 4.00 &amp; 94.00 &amp; 0.96 \ 
+  212 &amp; 47680 &amp; 43575 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 20.00 &amp; 95.00 &amp; 0.79 \ 
+  222 &amp; 47680 &amp; 43575 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 19.00 &amp; 95.00 &amp; 0.80 \ 
+  232 &amp; 47680 &amp; 43575 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 21.00 &amp; 95.00 &amp; 0.78 \ 
+  242 &amp; 47680 &amp; 43575 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 25.00 &amp; 95.00 &amp; 0.74 \ 
+  252 &amp; 47680 &amp; 43575 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 \ 
+  262 &amp; 47680 &amp; 43575 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 16.00 &amp; 95.00 &amp; 0.83 \ 
+  272 &amp; 47680 &amp; 43575 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 25.00 &amp; 95.00 &amp; 0.74 \ 
+  282 &amp; 47680 &amp; 43575 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 8.00 &amp; 94.00 &amp; 0.91 \ 
+  312 &amp; 47680 &amp; 44484 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 19.00 &amp; 95.00 &amp; 0.80 \ 
+  322 &amp; 47680 &amp; 44484 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 18.00 &amp; 95.00 &amp; 0.81 \ 
+  332 &amp; 47680 &amp; 44484 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 20.00 &amp; 95.00 &amp; 0.79 \ 
+  342 &amp; 47680 &amp; 44484 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 23.00 &amp; 95.00 &amp; 0.76 \ 
+  352 &amp; 47680 &amp; 44484 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  362 &amp; 47680 &amp; 44484 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 18.00 &amp; 95.00 &amp; 0.81 \ 
+  372 &amp; 47680 &amp; 44484 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 23.00 &amp; 95.00 &amp; 0.76 \ 
+  382 &amp; 47680 &amp; 44484 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 5.00 &amp; 94.00 &amp; 0.95 \ 
+  412 &amp; 47680 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 21.00 &amp; 95.00 &amp; 0.78 \ 
+  422 &amp; 47680 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 20.00 &amp; 95.00 &amp; 0.79 \ 
+  432 &amp; 47680 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 21.00 &amp; 95.00 &amp; 0.78 \ 
+  442 &amp; 47680 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 30.00 &amp; 95.00 &amp; 0.68 \ 
+  452 &amp; 47680 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  462 &amp; 47680 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 17.00 &amp; 95.00 &amp; 0.82 \ 
+  472 &amp; 47680 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 26.00 &amp; 95.00 &amp; 0.73 \ 
+  482 &amp; 47680 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 6.00 &amp; 94.00 &amp; 0.94 \ 
+  512 &amp; 47680 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  522 &amp; 47680 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  532 &amp; 47680 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  542 &amp; 47680 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 19.00 &amp; 95.00 &amp; 0.80 \ 
+  552 &amp; 47680 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 \ 
+  562 &amp; 47680 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  572 &amp; 47680 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  582 &amp; 47680 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 0.00 &amp; 94.00 &amp; 1.00 \ 
+  712 &amp; 47680 &amp; 44662 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  722 &amp; 47680 &amp; 44662 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  732 &amp; 47680 &amp; 44662 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  742 &amp; 47680 &amp; 44662 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 17.00 &amp; 95.00 &amp; 0.82 \ 
+  752 &amp; 47680 &amp; 44662 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 \ 
+  762 &amp; 47680 &amp; 44662 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 \ 
+  772 &amp; 47680 &amp; 44662 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 18.00 &amp; 95.00 &amp; 0.81 \ 
+  782 &amp; 47680 &amp; 44662 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 2.00 &amp; 94.00 &amp; 0.98 \ 
+  119 &amp; 47680 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 19.00 &amp; 95.00 &amp; 0.80 \ 
+  1112 &amp; 47680 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 17.00 &amp; 95.00 &amp; 0.82 \ 
+  1122 &amp; 47680 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 20.00 &amp; 95.00 &amp; 0.79 \ 
+  1132 &amp; 47680 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 24.00 &amp; 95.00 &amp; 0.75 \ 
+  1142 &amp; 47680 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 \ 
+  1152 &amp; 47680 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 16.00 &amp; 95.00 &amp; 0.83 \ 
+  1162 &amp; 47680 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 23.00 &amp; 95.00 &amp; 0.76 \ 
+  1172 &amp; 47680 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 5.00 &amp; 94.00 &amp; 0.95 \ 
+  159 &amp; 47680 &amp; 47728 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 19.00 &amp; 95.00 &amp; 0.80 \ 
+  1512 &amp; 47680 &amp; 47728 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 18.00 &amp; 95.00 &amp; 0.81 \ 
+  1522 &amp; 47680 &amp; 47728 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 20.00 &amp; 95.00 &amp; 0.79 \ 
+  1532 &amp; 47680 &amp; 47728 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 25.00 &amp; 95.00 &amp; 0.74 \ 
+  1542 &amp; 47680 &amp; 47728 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 \ 
+  1552 &amp; 47680 &amp; 47728 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 16.00 &amp; 95.00 &amp; 0.83 \ 
+  1562 &amp; 47680 &amp; 47728 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 23.00 &amp; 95.00 &amp; 0.76 \ 
+  1572 &amp; 47680 &amp; 47728 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 8.00 &amp; 94.00 &amp; 0.91 \ 
+  19 &amp; 48741 &amp; 43336 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  213 &amp; 48741 &amp; 43336 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  313 &amp; 48741 &amp; 43336 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 7.00 &amp; 95.00 &amp; 0.93 \ 
+  413 &amp; 48741 &amp; 43336 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  513 &amp; 48741 &amp; 43336 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 16.00 &amp; 95.00 &amp; 0.83 \ 
+  613 &amp; 48741 &amp; 43336 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  713 &amp; 48741 &amp; 43336 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 17.00 &amp; 95.00 &amp; 0.82 \ 
+  813 &amp; 48741 &amp; 43336 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 14.00 &amp; 94.00 &amp; 0.85 \ 
+  414 &amp; 48741 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 18.00 &amp; 95.00 &amp; 0.81 \ 
+  423 &amp; 48741 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 20.00 &amp; 95.00 &amp; 0.79 \ 
+  433 &amp; 48741 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 8.00 &amp; 95.00 &amp; 0.92 \ 
+  443 &amp; 48741 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 23.00 &amp; 95.00 &amp; 0.76 \ 
+  453 &amp; 48741 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 18.00 &amp; 95.00 &amp; 0.81 \ 
+  463 &amp; 48741 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 18.00 &amp; 95.00 &amp; 0.81 \ 
+  473 &amp; 48741 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 22.00 &amp; 95.00 &amp; 0.77 \ 
+  483 &amp; 48741 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 15.00 &amp; 94.00 &amp; 0.84 \ 
+  714 &amp; 48741 &amp; 44662 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 7.00 &amp; 95.00 &amp; 0.93 \ 
+  723 &amp; 48741 &amp; 44662 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 17.00 &amp; 95.00 &amp; 0.82 \ 
+  733 &amp; 48741 &amp; 44662 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 \ 
+  743 &amp; 48741 &amp; 44662 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 \ 
+  753 &amp; 48741 &amp; 44662 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  763 &amp; 48741 &amp; 44662 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 16.00 &amp; 95.00 &amp; 0.83 \ 
+  773 &amp; 48741 &amp; 44662 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  783 &amp; 48741 &amp; 44662 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 13.00 &amp; 94.00 &amp; 0.86 \ 
+  814 &amp; 48741 &amp; 43927 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  823 &amp; 48741 &amp; 43927 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  833 &amp; 48741 &amp; 43927 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 6.00 &amp; 95.00 &amp; 0.94 \ 
+  843 &amp; 48741 &amp; 43927 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  853 &amp; 48741 &amp; 43927 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  863 &amp; 48741 &amp; 43927 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 \ 
+  873 &amp; 48741 &amp; 43927 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 16.00 &amp; 95.00 &amp; 0.83 \ 
+  883 &amp; 48741 &amp; 43927 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 12.00 &amp; 94.00 &amp; 0.87 \ 
+  910 &amp; 48741 &amp; 43601 &amp;  96 &amp; F &amp; 3.00 &amp; 0.00 &amp; 10.00 &amp; 93.00 &amp; 0.89 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  913 &amp; 48741 &amp; 43601 &amp;  96 &amp; F &amp; 3.00 &amp; 0.00 &amp; 10.00 &amp; 93.00 &amp; 0.89 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 16.00 &amp; 95.00 &amp; 0.83 \ 
+  923 &amp; 48741 &amp; 43601 &amp;  96 &amp; F &amp; 3.00 &amp; 0.00 &amp; 10.00 &amp; 93.00 &amp; 0.89 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 4.00 &amp; 95.00 &amp; 0.96 \ 
+  933 &amp; 48741 &amp; 43601 &amp;  96 &amp; F &amp; 3.00 &amp; 0.00 &amp; 10.00 &amp; 93.00 &amp; 0.89 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 17.00 &amp; 95.00 &amp; 0.82 \ 
+  943 &amp; 48741 &amp; 43601 &amp;  96 &amp; F &amp; 3.00 &amp; 0.00 &amp; 10.00 &amp; 93.00 &amp; 0.89 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  953 &amp; 48741 &amp; 43601 &amp;  96 &amp; F &amp; 3.00 &amp; 0.00 &amp; 10.00 &amp; 93.00 &amp; 0.89 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  963 &amp; 48741 &amp; 43601 &amp;  96 &amp; F &amp; 3.00 &amp; 0.00 &amp; 10.00 &amp; 93.00 &amp; 0.89 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 19.00 &amp; 95.00 &amp; 0.80 \ 
+  973 &amp; 48741 &amp; 43601 &amp;  96 &amp; F &amp; 3.00 &amp; 0.00 &amp; 10.00 &amp; 93.00 &amp; 0.89 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 11.00 &amp; 94.00 &amp; 0.88 \ 
+  1110 &amp; 48741 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 \ 
+  1113 &amp; 48741 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  1123 &amp; 48741 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 8.00 &amp; 95.00 &amp; 0.92 \ 
+  1133 &amp; 48741 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 18.00 &amp; 95.00 &amp; 0.81 \ 
+  1143 &amp; 48741 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  1153 &amp; 48741 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 17.00 &amp; 95.00 &amp; 0.82 \ 
+  1163 &amp; 48741 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 17.00 &amp; 95.00 &amp; 0.82 \ 
+  1173 &amp; 48741 &amp; 48764 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 12.00 &amp; 94.00 &amp; 0.87 \ 
+  1210 &amp; 48741 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  1213 &amp; 48741 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 17.00 &amp; 95.00 &amp; 0.82 \ 
+  1223 &amp; 48741 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 8.00 &amp; 95.00 &amp; 0.92 \ 
+  1233 &amp; 48741 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  1243 &amp; 48741 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  1253 &amp; 48741 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 17.00 &amp; 95.00 &amp; 0.82 \ 
+  1263 &amp; 48741 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 19.00 &amp; 95.00 &amp; 0.80 \ 
+  1273 &amp; 48741 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 14.00 &amp; 94.00 &amp; 0.85 \ 
+  1310 &amp; 48741 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 16.00 &amp; 95.00 &amp; 0.83 \ 
+  1313 &amp; 48741 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 22.00 &amp; 95.00 &amp; 0.77 \ 
+  1323 &amp; 48741 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 8.00 &amp; 95.00 &amp; 0.92 \ 
+  1333 &amp; 48741 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 17.00 &amp; 95.00 &amp; 0.82 \ 
+  1343 &amp; 48741 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  1353 &amp; 48741 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 16.00 &amp; 95.00 &amp; 0.83 \ 
+  1363 &amp; 48741 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 17.00 &amp; 95.00 &amp; 0.82 \ 
+  1373 &amp; 48741 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 14.00 &amp; 94.00 &amp; 0.85 \ 
+  516 &amp; 48851 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  524 &amp; 48851 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  534 &amp; 48851 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  544 &amp; 48851 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 \ 
+  554 &amp; 48851 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  564 &amp; 48851 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  574 &amp; 48851 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  584 &amp; 48851 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 6.00 &amp; 94.00 &amp; 0.94 \ 
+  914 &amp; 48851 &amp; 43601 &amp;  96 &amp; F &amp; 3.00 &amp; 0.00 &amp; 0.00 &amp; 93.00 &amp; 1.00 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 \ 
+  915 &amp; 48851 &amp; 43601 &amp;  96 &amp; F &amp; 3.00 &amp; 0.00 &amp; 0.00 &amp; 93.00 &amp; 1.00 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 \ 
+  924 &amp; 48851 &amp; 43601 &amp;  96 &amp; F &amp; 3.00 &amp; 0.00 &amp; 0.00 &amp; 93.00 &amp; 1.00 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 \ 
+  934 &amp; 48851 &amp; 43601 &amp;  96 &amp; F &amp; 3.00 &amp; 0.00 &amp; 0.00 &amp; 93.00 &amp; 1.00 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  944 &amp; 48851 &amp; 43601 &amp;  96 &amp; F &amp; 3.00 &amp; 0.00 &amp; 0.00 &amp; 93.00 &amp; 1.00 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 9.00 &amp; 95.00 &amp; 0.91 \ 
+  954 &amp; 48851 &amp; 43601 &amp;  96 &amp; F &amp; 3.00 &amp; 0.00 &amp; 0.00 &amp; 93.00 &amp; 1.00 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 8.00 &amp; 95.00 &amp; 0.92 \ 
+  964 &amp; 48851 &amp; 43601 &amp;  96 &amp; F &amp; 3.00 &amp; 0.00 &amp; 0.00 &amp; 93.00 &amp; 1.00 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  974 &amp; 48851 &amp; 43601 &amp;  96 &amp; F &amp; 3.00 &amp; 0.00 &amp; 0.00 &amp; 93.00 &amp; 1.00 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 0.00 &amp; 94.00 &amp; 1.00 \ 
+  1314 &amp; 48851 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  1315 &amp; 48851 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 17.00 &amp; 95.00 &amp; 0.82 \ 
+  1324 &amp; 48851 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  1334 &amp; 48851 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  1344 &amp; 48851 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  1354 &amp; 48851 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  1364 &amp; 48851 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 \ 
+  1374 &amp; 48851 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 9.00 &amp; 94.00 &amp; 0.90 \ 
+  218 &amp; 48799 &amp; 43575 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 16.00 &amp; 95.00 &amp; 0.83 \ 
+  225 &amp; 48799 &amp; 43575 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 18.00 &amp; 95.00 &amp; 0.81 \ 
+  235 &amp; 48799 &amp; 43575 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 8.00 &amp; 95.00 &amp; 0.92 \ 
+  245 &amp; 48799 &amp; 43575 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 18.00 &amp; 95.00 &amp; 0.81 \ 
+  255 &amp; 48799 &amp; 43575 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 \ 
+  265 &amp; 48799 &amp; 43575 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  275 &amp; 48799 &amp; 43575 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 24.00 &amp; 95.00 &amp; 0.75 \ 
+  285 &amp; 48799 &amp; 43575 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 11.00 &amp; 94.00 &amp; 0.88 \ 
+  418 &amp; 48799 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 17.00 &amp; 95.00 &amp; 0.82 \ 
+  425 &amp; 48799 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 20.00 &amp; 95.00 &amp; 0.79 \ 
+  435 &amp; 48799 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 7.00 &amp; 95.00 &amp; 0.93 \ 
+  445 &amp; 48799 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 23.00 &amp; 95.00 &amp; 0.76 \ 
+  455 &amp; 48799 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 \ 
+  465 &amp; 48799 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  475 &amp; 48799 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 23.00 &amp; 95.00 &amp; 0.76 \ 
+  485 &amp; 48799 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 10.00 &amp; 94.00 &amp; 0.89 \ 
+  518 &amp; 48799 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 16.00 &amp; 95.00 &amp; 0.83 \ 
+  525 &amp; 48799 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 16.00 &amp; 95.00 &amp; 0.83 \ 
+  535 &amp; 48799 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 4.00 &amp; 95.00 &amp; 0.96 \ 
+  545 &amp; 48799 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 16.00 &amp; 95.00 &amp; 0.83 \ 
+  555 &amp; 48799 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  565 &amp; 48799 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  575 &amp; 48799 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 21.00 &amp; 95.00 &amp; 0.78 \ 
+  585 &amp; 48799 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 11.00 &amp; 94.00 &amp; 0.88 \ 
+  618 &amp; 48799 &amp; 43644 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 \ 
+  625 &amp; 48799 &amp; 43644 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  635 &amp; 48799 &amp; 43644 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 \ 
+  645 &amp; 48799 &amp; 43644 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 16.00 &amp; 95.00 &amp; 0.83 \ 
+  655 &amp; 48799 &amp; 43644 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 \ 
+  665 &amp; 48799 &amp; 43644 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 \ 
+  675 &amp; 48799 &amp; 43644 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 18.00 &amp; 95.00 &amp; 0.81 \ 
+  685 &amp; 48799 &amp; 43644 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 10.00 &amp; 94.00 &amp; 0.89 \ 
+  1016 &amp; 48799 &amp; 44540 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  1017 &amp; 48799 &amp; 44540 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 22.00 &amp; 95.00 &amp; 0.77 \ 
+  1025 &amp; 48799 &amp; 44540 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 6.00 &amp; 95.00 &amp; 0.94 \ 
+  1035 &amp; 48799 &amp; 44540 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 21.00 &amp; 95.00 &amp; 0.78 \ 
+  1045 &amp; 48799 &amp; 44540 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 \ 
+  1055 &amp; 48799 &amp; 44540 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  1065 &amp; 48799 &amp; 44540 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 23.00 &amp; 95.00 &amp; 0.76 \ 
+  1075 &amp; 48799 &amp; 44540 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 11.00 &amp; 94.00 &amp; 0.88 \ 
+  1216 &amp; 48799 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 2.00 &amp; 95.00 &amp; 0.98 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  1217 &amp; 48799 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 2.00 &amp; 95.00 &amp; 0.98 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 18.00 &amp; 95.00 &amp; 0.81 \ 
+  1225 &amp; 48799 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 2.00 &amp; 95.00 &amp; 0.98 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 4.00 &amp; 95.00 &amp; 0.96 \ 
+  1235 &amp; 48799 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 2.00 &amp; 95.00 &amp; 0.98 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 21.00 &amp; 95.00 &amp; 0.78 \ 
+  1245 &amp; 48799 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 2.00 &amp; 95.00 &amp; 0.98 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 8.00 &amp; 95.00 &amp; 0.92 \ 
+  1255 &amp; 48799 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 2.00 &amp; 95.00 &amp; 0.98 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  1265 &amp; 48799 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 2.00 &amp; 95.00 &amp; 0.98 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 19.00 &amp; 95.00 &amp; 0.80 \ 
+  1275 &amp; 48799 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 2.00 &amp; 95.00 &amp; 0.98 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 11.00 &amp; 94.00 &amp; 0.88 \ 
+  1316 &amp; 48799 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  1317 &amp; 48799 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 19.00 &amp; 95.00 &amp; 0.80 \ 
+  1325 &amp; 48799 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 6.00 &amp; 95.00 &amp; 0.94 \ 
+  1335 &amp; 48799 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 18.00 &amp; 95.00 &amp; 0.81 \ 
+  1345 &amp; 48799 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 9.00 &amp; 95.00 &amp; 0.91 \ 
+  1355 &amp; 48799 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 16.00 &amp; 95.00 &amp; 0.83 \ 
+  1365 &amp; 48799 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 17.00 &amp; 95.00 &amp; 0.82 \ 
+  1375 &amp; 48799 &amp; 48642 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 14.00 &amp; 94.00 &amp; 0.85 \ 
+  1516 &amp; 48799 &amp; 47728 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 17.00 &amp; 95.00 &amp; 0.82 \ 
+  1517 &amp; 48799 &amp; 47728 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 17.00 &amp; 95.00 &amp; 0.82 \ 
+  1525 &amp; 48799 &amp; 47728 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 9.00 &amp; 95.00 &amp; 0.91 \ 
+  1535 &amp; 48799 &amp; 47728 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 18.00 &amp; 95.00 &amp; 0.81 \ 
+  1545 &amp; 48799 &amp; 47728 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 9.00 &amp; 95.00 &amp; 0.91 \ 
+  1555 &amp; 48799 &amp; 47728 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  1565 &amp; 48799 &amp; 47728 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 22.00 &amp; 95.00 &amp; 0.77 \ 
+  1575 &amp; 48799 &amp; 47728 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 11.00 &amp; 94.00 &amp; 0.88 \ 
+  4110 &amp; 48955 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 \ 
+  426 &amp; 48955 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 10.00 &amp; 95.00 &amp; 0.89 \ 
+  436 &amp; 48955 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  446 &amp; 48955 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 15.00 &amp; 95.00 &amp; 0.84 \ 
+  456 &amp; 48955 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  466 &amp; 48955 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 \ 
+  476 &amp; 48955 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 19.00 &amp; 95.00 &amp; 0.80 \ 
+  486 &amp; 48955 &amp; 43238 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 0.00 &amp; 95.00 &amp; 1.00 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 0.00 &amp; 94.00 &amp; 1.00 \ 
+  5110 &amp; 48955 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 9.00 &amp; 95.00 &amp; 0.91 \ 
+  526 &amp; 48955 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 16.00 &amp; 95.00 &amp; 0.83 \ 
+  536 &amp; 48955 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 16.00 &amp; 95.00 &amp; 0.83 \ 
+  546 &amp; 48955 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 8.00 &amp; 95.00 &amp; 0.92 \ 
+  556 &amp; 48955 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 16.00 &amp; 95.00 &amp; 0.83 \ 
+  566 &amp; 48955 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  576 &amp; 48955 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  586 &amp; 48955 &amp; 43582 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 11.00 &amp; 95.00 &amp; 0.88 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 7.00 &amp; 94.00 &amp; 0.93 \ 
+  1218 &amp; 48955 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 44709 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 12.00 &amp; 95.00 &amp; 0.87 \ 
+  1219 &amp; 48955 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 44720 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 13.00 &amp; 95.00 &amp; 0.86 \ 
+  1226 &amp; 48955 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 43705 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 19.00 &amp; 95.00 &amp; 0.80 \ 
+  1236 &amp; 48955 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 44634 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 9.00 &amp; 95.00 &amp; 0.91 \ 
+  1246 &amp; 48955 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 43545 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 16.00 &amp; 95.00 &amp; 0.83 \ 
+  1256 &amp; 48955 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 44638 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 14.00 &amp; 95.00 &amp; 0.85 \ 
+  1266 &amp; 48955 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 44696 &amp;  96 &amp; M &amp; 1.00 &amp; 0.00 &amp; 18.00 &amp; 95.00 &amp; 0.81 \ 
+  1276 &amp; 48955 &amp; 48651 &amp;  96 &amp; F &amp; 1.00 &amp; 0.00 &amp; 3.00 &amp; 95.00 &amp; 0.97 &amp; 43383 &amp;  96 &amp; M &amp; 2.00 &amp; 0.00 &amp; 8.00 &amp; 94.00 &amp; 0.91 \ 
+   \hline
+\end{tabular}
+\end{table}</p>
 
 </body>
 

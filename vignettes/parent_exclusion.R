@@ -2,6 +2,8 @@
 knitr::opts_chunk$set(echo = TRUE)
 library(parentfindr)
 library(rmsutilityr)
+library(stringi)
+library(xtable)
 
 
 ## ----define-allele-and-trio-filenames-----------------------------------------
@@ -13,35 +15,40 @@ triosFile <- "../inst/testdata/snp-potential-trios.xlsx"
 #triosFile <- "inst/testdata/str-potential-trios.txt"
 #alleleFile <- "inst/testdata/str-animal-alleles.xlsx"
 #triosFile <- "inst/testdata/str-potential-trios.txt"
-alleleFile <- "../inst/testdata/str-animal-alleles_rms.xlsx"
-triosFile <- "../inst/testdata/str-potential-trios.txt"
+#alleleFile <- "../inst/testdata/str-animal-alleles_rms.xlsx"
+#triosFile <- "../inst/testdata/str-potential-trios.txt"
 
 
 ## ----set-up-test-data---------------------------------------------------------
-  minNumber <- 4
-  maxDiscrepant <- 4
-  thMissing <- 4
-  thDiscrepant <- 4
-  microsatellites <- TRUE
-  siresFirst <- FALSE
-  selDiscrepant <- TRUE
-  nAlleles <- 0
-  dateType = "YYYYMMDD" # is one of c("YYYYMMDD", "mm/dd/YYYY")
-  firstParentType <- "dams" # is one of c("dames", "sires")
-
+  parentfindrParms <- list(
+    minNumber = 4,
+    maxDiscrepant = 4,
+    thMissing = 4,
+    thDiscrepant = 4,
+    microsatellites = TRUE,
+    selectionTypeFewestDiscrepant = TRUE, # Not used yet
+    dateType = "YYYYMMDD", # is one of c("YYYYMMDD", "mm/dd/YYYY")
+    firstParentType = "dams", # is one of c("dames", "sires")
+    alleleFile = alleleFile,
+    triosFile = triosFile)
+  
+  parentfindrParms <- getParentfindrConfig(TRUE)
+  
 
 ## ----read-in-example-data, echo=TRUE------------------------------------------
-trios <- getTrios(triosFile)
-animalAlleles <- getAnimalAlleles(alleleFile, dateType)
+trios <- getTrios(parentfindrParms$triosFile)
+animalAlleles <- getAnimalAlleles(parentfindrParms$alleleFile,
+                                  parentfindrParms$dateType)
 
 
 ## ----calculate-scores---------------------------------------------------------
 scores <- getScores(trios, animalAlleles)
-scoresDf <- makeScoresDf(scores, firstParentType)
+scoresDf <- makeScoresDf(scores, parentfindrParms$firstParentType)
 
 
 ## ----remove-offspring-maxMissing----------------------------------------------
-offspringToRemove <- getOffspringOverMoxMissing(scoresDf, thMissing)
+offspringToRemove <- getOffspringOverMoxMissing(scoresDf, 
+                                                 parentfindrParms$thMissing)
 scoresDf <- excludeOffspring(offspringToRemove, scoresDf)
 
 
@@ -54,19 +61,58 @@ scoresDf <- excludeOffspring(offspringToRemove, scoresDf)
 
 
 ## ----remove-dams-maxMissing-maxUnused-----------------------------------------
-scoresDf  <- removeDamsOverMaxMissing(scoresDf, thMissing)
+scoresDf  <- removeDamsOverMaxMissing(scoresDf, parentfindrParms$thMissing)
 
 
-## ----remove-dam-maxDiscrepant-------------------------------------------------
-scoresDf <- removeDamsOverMaxDiscrepant(scoresDf, thDiscrepant)
+## ----create-descriptive-text-for-removals-------------------------------------
+if (parentfindrParms$selectionTypeFewestDiscrepant) {
+  damRemovalText <- stri_c(
+    "The selection type is 'Fewest Discrepant'. Thus,
+    'removeDamsOverMaxDiscrepant()' will be called in the code block below.\n",
+    "\nThis will remove dams with more than ", 
+    parentfindrParms$thDiscrepant, " percent discrepant loci.")
+  sireRemovalText <- stri_c(
+    "The selection type is 'Fewest Discrepant'. Thus,
+    'removeSiresOverMaxDiscrepant()' will be called in the code block below.\n",
+    "\nThis will remove sires with more than ", 
+    parentfindrParms$thDiscrepant, " percent discrepant loci.")
+} else {
+  damRemovalText <- stri_c(
+    "The selection type is 'Most Concordant'. Thus,
+    'removeDamsBelowMinNumber()' will be called in the code block below.\n",
+    "\nThis will remove dams with less than ", 
+    parentfindrParms$minNumber, " percent concordent loci.")
+  sireRemovalText <- stri_c(
+    "The selection type is 'Most Concordant'. Thus,
+    'removeSiresBelowMinNumber()' will be called in the code block below.\n",
+    "\nThis will remove sires with less than ", 
+    parentfindrParms$minNumber, " percent concordent loci.")
+}
+
+## ----remove-dams--------------------------------------------------------------
+if (parentfindrParms$selectionTypeFewestDiscrepant) {
+  scoresDf <- removeDamsOverMaxDiscrepant(scoresDf,
+                                          parentfindrParms$thDiscrepant)
+} else {
+  scoresDf <- removeDamsBelowMinNumber(scoresDf,
+                                       parentfindrParms$minNumber)
+}
 
 
 
-## ----remove-sires-maxMissing-maxUnused----------------------------------------
-scoresDf <- removeSiresOverMoxMissing(scoresDf, thMissing)
+## ----remove-sires-------------------------------------------------------------
+scoresDf <- removeSiresOverMoxMissing(scoresDf, parentfindrParms$thMissing)
+if (parentfindrParms$selectionTypeFewestDiscrepant) {
+  scoresDf <- removeSiresOverMoxMissing(scoresDf,
+                                        parentfindrParms$thDiscrepant)
+} else {
+  scoresDf <- removeSiresBelowMinNumber(scoresDf,
+                                        parentfindrParms$minNumber)
+}
 
 
-## ----remove-sires-maxDiscrepant-----------------------------------------------
-scoresDf <- removeSiresOverMoxDiscrepant(scoresDf, thDiscrepant)
+
+## ----print-scoresDf, include = TRUE, results = 'asis'-------------------------
+xtable(scoresDf)
 
 

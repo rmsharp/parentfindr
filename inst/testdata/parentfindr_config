@@ -1,0 +1,15 @@
+# ----paths to data files---------------------------------------------------------
+alleleFile = "../inst/testdata/str-animal-alleles_rms.xlsx"
+triosFile = "../inst/testdata/str-potential-trios.txt"
+
+
+# ----define settings---------------------------------------------------------
+  minNumber = 4
+  maxDiscrepant = 4
+  thMissing = 4
+  thDiscrepant = 4
+  microsatellites = TRUE
+  selectionTypeFewestDiscrepant = TRUE
+  nAlleles = 0
+  dateType = "YYYYMMDD" # is one of c("YYYYMMDD", "mm/dd/YYYY")
+  firstParentType = "dams" # is one of c("dams", "sires")
